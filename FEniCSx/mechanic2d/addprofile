@@ -1,0 +1,15 @@
+#!/bin/bash
+for i in asym_manual asym_symb asym_symb_sym asym_ufl
+do
+   cp -f $i.c ${i}_orig.c
+   awk 'BEGIN{s=0;o=0;p=1;u=0}                                    \
+        /void tabulate_tensor_integral_/{s=1;u+=1;}                        \
+        /#include <ufcx.h>/{p=0;printf("%s\n\n#include \"mpi.h\"\ndouble gmeasure1=0.,gmeasure2=0.;\n",$0)}             \
+        /^{/{if(s==1){ if ( o==0){printf("%s\ndouble start = MPI_Wtime();\n",$0);o=1;p=0;} else{o+=1;}}}  \
+        /^}/{if(s==1){ if (o>1){o-=1;}else {printf("gmeasure%d += MPI_Wtime()-start;\n%s\n",u,$0);o=0;p=0;s=0;}}}  \
+        {if (p==1) print $0; p=1;}' ${i}_orig.c > $i.c 
+   cp -f $i.h ${i}_orig.h
+   awk 'BEGIN{d=0;}                                    \
+      /#ifdef __cplusplus/{if (d==0){d=1;}else{printf("extern double gmeasure1;\nextern double gmeasure2;\n\n")}}             \
+      {print $0}' ${i}_orig.h >$i.h
+done

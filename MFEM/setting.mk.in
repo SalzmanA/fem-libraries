@@ -1,0 +1,11 @@
+INSTA_DIR=/path/to/folder/where/MFEM/headers/and/libs/are/instaled
+ARITH=/possible/specifc/folder/path/related/to/arithmetic/otherwise/use/INSTA_DIR
+#
+OPT=-g -O3 -DNDEBUG
+#OPT=-g -O0 -Wall 
+#
+COMP          = mpicxx
+FLAGS         = -std=c++20 ${OPT} \
+					 -I${INSTA_DIR}/include \
+					 -I${ARITH}/include
+LIBS          = -L${ARITH}/lib -lmfem -lpetsc -Wl,-rpath,${ARITH}/lib

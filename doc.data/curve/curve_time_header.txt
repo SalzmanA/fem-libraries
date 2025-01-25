@@ -1,0 +1,232 @@
+2 All manual
+3 Initialize manual
+4 Read the mesh manual
+5 Refine the mesh manual
+6 Define space manual
+7 Define damage manual
+8 Material constant manual
+9 Dirichlet setting manual
+10 Neuman setting manual
+11 Create and assemble elementary vector manual
+12 Create and assemble elementary matrix manual
+13 Create Elementary vector manual
+14 Create Elementary matrix manual
+15 Nonlinear form creation manual
+16 Solver creation manual
+17 NonLinear resolution manual
+18 Outputs manual
+19 strain/stress computation manual
+20 All symb
+21 Initialize symb
+22 Read the mesh symb
+23 Refine the mesh symb
+24 Define space symb
+25 Define damage symb
+26 Material constant symb
+27 Dirichlet setting symb
+28 Neuman setting symb
+29 Create and assemble elementary vector symb
+30 Create and assemble elementary matrix symb
+31 Create Elementary vector symb
+32 Create Elementary matrix symb
+33 Nonlinear form creation symb
+34 Solver creation symb
+35 NonLinear resolution symb
+36 Outputs symb
+37 strain/stress computation symb
+38 All symb_sym
+39 Initialize symb_sym
+40 Read the mesh symb_sym
+41 Refine the mesh symb_sym
+42 Define space symb_sym
+43 Define damage symb_sym
+44 Material constant symb_sym
+45 Dirichlet setting symb_sym
+46 Neuman setting symb_sym
+47 Create and assemble elementary vector symb_sym
+48 Create and assemble elementary matrix symb_sym
+49 Create Elementary vector symb_sym
+50 Create Elementary matrix symb_sym
+51 Nonlinear form creation symb_sym
+52 Solver creation symb_sym
+53 NonLinear resolution symb_sym
+54 Outputs symb_sym
+55 strain/stress computation symb_sym
+56 All ufl
+57 Initialize ufl
+58 Read the mesh ufl
+59 Refine the mesh ufl
+60 Define space ufl
+61 Define damage ufl
+62 Material constant ufl
+63 Dirichlet setting ufl
+64 Neuman setting ufl
+65 Create and assemble elementary vector ufl
+66 Create and assemble elementary matrix ufl
+67 Create Elementary vector ufl
+68 Create Elementary matrix ufl
+69 Nonlinear form creation ufl
+70 Solver creation ufl
+71 NonLinear resolution ufl
+72 Outputs ufl
+73 strain/stress computation ufl
+74 All _
+75 Initialize _
+76 Read the mesh _
+77 Refine the mesh _
+78 Define space _
+79 Define damage _
+80 Material constant _
+81 Dirichlet setting _
+82 Neuman setting _
+83 Elementary vector _
+84 Elementary matrix _
+85 Nonlinear form creation _
+86 Solver creation _
+87 NonLinear resolution _
+88 Outputs _
+89 strain/stress computation _
+90 All _AD_
+91 Initialize _AD_
+92 Read the mesh _AD_
+93 Refine the mesh _AD_
+94 Define space _AD_
+95 Define damage _AD_
+96 Material constant _AD_
+97 Dirichlet setting _AD_
+98 Neuman setting _AD_
+99 Elementary vector _AD_
+100 Elementary matrix _AD_
+101 Nonlinear form creation _AD_
+102 Solver creation _AD_
+103 NonLinear resolution _AD_
+104 Outputs _AD_
+105 strain/stress computation _AD_
+106 All manual bigmem
+107 Initialize manual bigmem
+108 Read the mesh manual bigmem
+109 Refine the mesh manual bigmem
+110 Define space manual bigmem
+111 Define damage manual bigmem
+112 Material constant manual bigmem
+113 Dirichlet setting manual bigmem
+114 Neuman setting manual bigmem
+115 Create and assemble elementary vector manual bigmem
+116 Create and assemble elementary matrix manual bigmem
+117 Nonlinear form creation manual bigmem
+118 Solver creation manual bigmem
+119 NonLinear resolution manual bigmem
+120 Outputs manual bigmem
+121 strain/stress computation manual bigmem
+122 All symb bigmem
+123 Initialize symb bigmem
+124 Read the mesh symb bigmem
+125 Refine the mesh symb bigmem
+126 Define space symb bigmem
+127 Define damage symb bigmem
+128 Material constant symb bigmem
+129 Dirichlet setting symb bigmem
+130 Neuman setting symb bigmem
+131 Create and assemble elementary vector symb bigmem
+132 Create and assemble elementary matrix symb bigmem
+133 Nonlinear form creation symb bigmem
+134 Solver creation symb bigmem
+135 NonLinear resolution symb bigmem
+136 Outputs symb bigmem
+137 strain/stress computation symb bigmem
+138 All symb_sym bigmem
+139 Initialize symb_sym bigmem
+140 Read the mesh symb_sym bigmem
+141 Refine the mesh symb_sym bigmem
+142 Define space symb_sym bigmem
+143 Define damage symb_sym bigmem
+144 Material constant symb_sym bigmem
+145 Dirichlet setting symb_sym bigmem
+146 Neuman setting symb_sym bigmem
+147 Create and assemble elementary vector symb_sym bigmem
+148 Create and assemble elementary matrix symb_sym bigmem
+149 Nonlinear form creation symb_sym bigmem
+150 Solver creation symb_sym bigmem
+151 NonLinear resolution symb_sym bigmem
+152 Outputs symb_sym bigmem
+153 strain/stress computation symb_sym bigmem
+154 All ufl bigmem
+155 Initialize ufl bigmem
+156 Read the mesh ufl bigmem
+157 Refine the mesh ufl bigmem
+158 Define space ufl bigmem
+159 Define damage ufl bigmem
+160 Material constant ufl bigmem
+161 Dirichlet setting ufl bigmem
+162 Neuman setting ufl bigmem
+163 Create and assemble elementary vector ufl bigmem
+164 Create and assemble elementary matrix ufl bigmem
+165 Nonlinear form creation ufl bigmem
+166 Solver creation ufl bigmem
+167 NonLinear resolution ufl bigmem
+168 Outputs ufl bigmem
+169 strain/stress computation ufl bigmem
+170 All _ h1Collection
+171 Initialize _ h1Collection
+172 Read the mesh _ h1Collection
+173 Refine the mesh _ h1Collection
+174 Define space _ h1Collection
+175 Define damage _ h1Collection
+176 Material constant _ h1Collection
+177 Dirichlet setting _ h1Collection
+178 Neuman setting _ h1Collection
+179 Elementary vector _ h1Collection
+180 Elementary matrix _ h1Collection
+181 Nonlinear form creation _ h1Collection
+182 Solver creation _ h1Collection
+183 NonLinear resolution _ h1Collection
+184 Outputs _ h1Collection
+185 strain/stress computation _ h1Collection
+186 All _AD_ h1Collection
+187 Initialize _AD_ h1Collection
+188 Read the mesh _AD_ h1Collection
+189 Refine the mesh _AD_ h1Collection
+190 Define space _AD_ h1Collection
+191 Define damage _AD_ h1Collection
+192 Material constant _AD_ h1Collection
+193 Dirichlet setting _AD_ h1Collection
+194 Neuman setting _AD_ h1Collection
+195 Elementary vector _AD_ h1Collection
+196 Elementary matrix _AD_ h1Collection
+197 Nonlinear form creation _AD_ h1Collection
+198 Solver creation _AD_ h1Collection
+199 NonLinear resolution _AD_ h1Collection
+200 Outputs _AD_ h1Collection
+201 strain/stress computation _AD_ h1Collection
+202 All _ Fcst
+203 Initialize _ Fcst
+204 Read the mesh _ Fcst
+205 Refine the mesh _ Fcst
+206 Define space _ Fcst
+207 Define damage _ Fcst
+208 Material constant _ Fcst
+209 Dirichlet setting _ Fcst
+210 Neuman setting _ Fcst
+211 Elementary vector _ Fcst
+212 Elementary matrix _ Fcst
+213 Nonlinear form creation _ Fcst
+214 Solver creation _ Fcst
+215 NonLinear resolution _ Fcst
+216 Outputs _ Fcst
+217 strain/stress computation _ Fcst
+218 All _AD_ Fcst
+219 Initialize _AD_ Fcst
+220 Read the mesh _AD_ Fcst
+221 Refine the mesh _AD_ Fcst
+222 Define space _AD_ Fcst
+223 Define damage _AD_ Fcst
+224 Material constant _AD_ Fcst
+225 Dirichlet setting _AD_ Fcst
+226 Neuman setting _AD_ Fcst
+227 Elementary vector _AD_ Fcst
+228 Elementary matrix _AD_ Fcst
+229 Nonlinear form creation _AD_ Fcst
+230 Solver creation _AD_ Fcst
+231 NonLinear resolution _AD_ Fcst
+232 Outputs _AD_ Fcst
+233 strain/stress computation _AD_ Fcst

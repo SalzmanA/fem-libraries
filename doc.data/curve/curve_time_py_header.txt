@@ -1,0 +1,56 @@
+2 All
+3 Initialize
+4 Read the mesh
+5 Refine the mesh
+6 Define space
+7 Define damage
+8 Material constant
+9 Dirichlet setting
+10 Neuman setting
+11 Nonlinear form creation
+12 Solver creation
+13 NonLinear resolution
+14 Outputs
+15 strain/stress computation
+16 All _bigmem
+17 Initialize _bigmem
+18 Read the mesh _bigmem
+19 Refine the mesh _bigmem
+20 Define space _bigmem
+21 Define damage _bigmem
+22 Material constant _bigmem
+23 Dirichlet setting _bigmem
+24 Neuman setting _bigmem
+25 Nonlinear form creation _bigmem
+26 Solver creation _bigmem
+27 NonLinear resolution _bigmem
+28 Outputs _bigmem
+29 strain/stress computation _bigmem
+30 All _v4
+31 Initialize _v4
+32 Read the mesh _v4
+33 Refine the mesh _v4
+34 Define space _v4
+35 Define damage _v4
+36 Material constant _v4
+37 Dirichlet setting _v4
+38 Neuman setting _v4
+39 Nonlinear form creation _v4
+40 Solver creation _v4
+41 NonLinear resolution _v4
+42 Outputs _v4
+43 strain/stress computation _v4
+44 All _v5
+45 Initialize _v5
+46 Read the mesh _v5
+47 Refine the mesh _v5
+48 Define space _v5
+49 Define damage _v5
+50 Material constant _v5
+51 Dirichlet setting _v5
+52 Neuman setting _v5
+53 Nonlinear form creation _v5
+54 Solver creation _v5
+55 NonLinear resolution _v5
+56 Outputs _v5
+57 strain/stress computation _v5

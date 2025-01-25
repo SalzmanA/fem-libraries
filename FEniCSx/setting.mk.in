@@ -1,0 +1,16 @@
+UFCX_DIR=/path/where/ufcx.h/is/located
+DOLFINX_DIR=/path/to/dolfinx/instalation/main/folder/where/include/and/lib/folder/are/located
+BASIX_DIR=/path/to/basix/lib
+PETSC_DIR=/path/to/petsc/instalation/main/folder/where/include/and/lib/folder/are/located
+#
+# If adios2 library is available add to OPT the -DHAS_ADIOS2 macro to get output results in bp format
+OPT=-O3 -DNDEBUG
+#OPT=-g -O0 -Wall 
+#
+COMP          = mpicxx
+FLAGS         = -std=c++20 ${OPT} \
+					 -I${DOLFINX_DIR}/include \
+					 -I${UFCX_DIR} \
+					 -I/usr/local/petsc/include \
+					 -I${PETSC_DIR}/include  -DHAS_PETSC 
+LIBS          = -L${DOLFINX_DIR}/lib -ldolfinx -L${PETSC_DIR}/lib -lpetsc -L${BASIX_DIR} -lbasix -Wl,-rpath,${DOLFINX_DIR}/lib -Wl,-rpath,${PETSC_DIR}/lib -Wl,-rpath,${BASIX_DIR}

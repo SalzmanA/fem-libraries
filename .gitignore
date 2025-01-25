@@ -1,0 +1,64 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+#svn stuff
+.svn
+
+#vi stuff
+.*.swp
+
+# LICENSE stuff
+LICENSE
+NOTICE
+CONTRIBUTORS
+README
+Changes*
+LICENSE.txt
+
+#AOMD
+*.pos
+*.pos.gz
+*.msh
+*.msh.gz
+
+#latex
+*.aux
+*.bbl
+*.blg
+*.spl
+*.log
+*.synctex.gz
+*.lot
+
+#scribus
+*.autosave
+
+#dia
+*.dia~
+
+# Here is somme specific stuff
+*.pdf
+doc.data/img
+asym_elasto_damage_model
+asym_elasto_damage_model_AD
+test
+setting.mk

@@ -1,0 +1,41 @@
+@misc{andrej2024highperformancefiniteelementsmfem,
+      title={High-performance finite elements with MFEM},
+      author={Julian Andrej and Nabil Atallah and Jan-Phillip Bäcker and John Camier and Dylan Copeland and Veselin Dobrev and Yohann Dudouit and Tobias Duswald and Brendan Keith and Dohyun Kim and Tzanio Kolev and Boyan Lazarov and Ketan Mittal and Will Pazner and Socratis Petrides and Syun'ichi Shiraiwa and Mark Stowell and Vladimir Tomov},
+      year={2024},
+      eprint={2402.15940},
+      archivePrefix={arXiv},
+      primaryClass={cs.MS},
+      url={https://arxiv.org/abs/2402.15940},
+}
+@article{QUEY20111729,
+title = {Large-scale 3D random polycrystals for the finite element method: Generation, meshing and remeshing},
+journal = {Computer Methods in Applied Mechanics and Engineering},
+volume = {200},
+number = {17},
+pages = {1729-1745},
+year = {2011},
+issn = {0045-7825},
+doi = {https://doi.org/10.1016/j.cma.2011.01.002},
+url = {https://www.sciencedirect.com/science/article/pii/S004578251100003X},
+author = {R. Quey and P.R. Dawson and F. Barbe},
+keywords = {Polycrystal, Voronoi tessellation, Meshing, Crystal plasticity, Finite element method, Remeshing},
+abstract = {A methodology is presented for the generation and meshing of large-scale three-dimensional random polycrystals. Voronoi tessellations are used and are shown to include morphological properties that make them particularly challenging to mesh with high element quality. Original approaches are presented to solve these problems: (i) “geometry regularization”, which consists in removing the geometrical details of the polycrystal morphology, (ii) “multimeshing” which consists in using simultaneously several meshing algorithms to optimize mesh quality, and (iii) remeshing, by which a new mesh is constructed over a deformed mesh and the state variables are transported, for large strain applications. Detailed statistical analyses are conducted on the polycrystal morphology and mesh quality. The results are mainly illustrated by the high-quality meshing of polycrystals with large number of grains (up to 105), and the finite element method simulation of a plane strain compression of ε=1.4 of a 3000-grain polycrystal. The presented algorithms are implemented and distributed in a free (open-source) software package: Neper.}
+}
+@misc{Neper,
+title={Neper: Polycrystal Generation and Meshing https://neper.info},
+url={https://neper.info}
+}
+@article{PLAZA2000195,
+title = {Local refinement of simplicial grids based on the skeleton},
+journal = {Applied Numerical Mathematics},
+volume = {32},
+number = {2},
+pages = {195-218},
+year = {2000},
+issn = {0168-9274},
+doi = {https://doi.org/10.1016/S0168-9274(99)00022-7},
+url = {https://www.sciencedirect.com/science/article/pii/S0168927499000227},
+author = {A. Plaza and G.F. Carey},
+keywords = {Grid refinement, 3D bisection, Tetrahedra, Adaptivity},
+abstract = {In this paper we present a novel approach to the development of a class of local simplicial refinement strategies. The algorithm in two dimensions first subdivides certain edges. Then each triangle, if refined, is subdivided in two, three or four subelements depending on the previous division of its edges. Similarly, in three dimensions the algorithm begins by subdividing the two-dimensional triangulation composed by the faces of the tetrahedra (the skeleton) and then subdividing each tetrahedron in a compatible manner with the division of the faces. The complexity of the algorithm is linear in the number of added nodes. The algorithm is fully automatic and has been implemented to achieve global as well as local refinements. The numerical results obtained appear to confirm that the measure of degeneracy of subtetrahedra is bounded, and converges asymptotically to a fixed value when the refinement proceeds.}
+}

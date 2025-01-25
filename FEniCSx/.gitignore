@@ -1,0 +1,9 @@
+asym_elasto_damage_model_manual
+asym_elasto_damage_model_symb
+asym_elasto_damage_model_symb_sym
+asym_elasto_damage_model_ufl
+mfem_disp*
+*.c
+*.h
+*.h5
+*.xdmf

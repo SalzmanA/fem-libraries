@@ -1,0 +1,2410 @@
+
+
+\date{\today}
+
+\documentclass[12pt]{article}
+\usepackage{subfig}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{color}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{gnuplot-lua-tikz}
+\usepackage{amssymb,amsfonts,amsmath,textcomp}
+\usepackage{scalerel}
+\usepackage[final]{listings}
+\usepackage{color}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+
+\definecolor{greyr}{RGB}{135,139,133}
+\definecolor{greyb}{RGB}{80,80,100}
+\definecolor{geditstring}{RGB}{255,22,255}
+\definecolor{gedittype}{RGB}{49,139,87}
+\definecolor{geditkeyword}{RGB}{167,40,44}
+\definecolor{geditmacro}{RGB}{163,32,243}
+\definecolor{cppruler}{RGB}{148,224,61}
+\definecolor{pythonruler}{RGB}{106,204,209}
+\definecolor{MFEMDarkGreen}{RGB}{0,100,0}
+\definecolor{MFEMGreen}{RGB}{0,255,0}
+\definecolor{MFEMForestGreen}{RGB}{34,139,34}
+\newcommand{\f}[1]{FEniCSx#1}
+\newcommand{\vm}[1]{
+	{\ensuremath{\mathbf{#1}}}
+}
+\newcommand{\tens}[1]{
+	{\ensuremath{\mathsf{#1}}}
+}
+\newcommand{\stretchint}[1]{
+	{\vcenter{\hbox{\stretchto[440]{\displaystyle\int}{#1}}}}
+}
+\newcommand{\mycode}[1]{\textsf{"}\lstinline`#1`\textsf{"}}
+\newcommand{\mycodepy}[1]{\textsf{"}\lstinline[language=Python]`#1`\textsf{"}}
+
+\graphicspath{ {doc.data/img/} }
+
+\lstset{
+	language=[ISO]C++,
+	breaklines=true,
+	tabsize=2,
+	showstringspaces=false,
+	captionpos=b,
+	numbers=left,
+	caption={~},
+	numberstyle=\tiny,
+	basicstyle=\small,
+	stringstyle=\color{geditstring},
+	directivestyle={\color{geditmacro}},
+	commentstyle=\color{blue},
+	%identifierstyle=\color{greyr},
+	deletekeywords=[1]{const,char,unsigned,int,short,double,float},
+	morekeywords=[2]{const,char,unsigned,int,short,double,float},
+	keywordstyle={[1]\color{geditkeyword}},
+	keywordstyle={[2]\color{gedittype}},
+	frame=shadowbox,
+	rulesepcolor=\color{cppruler},
+	rulecolor=\color{cppruler},
+	escapechar={é}
+}
+\lstdefinelanguage{Python}
+{
+	morecomment=[l]{\#},
+	morekeywords=[1]{import,from,def,return,lambda},
+	morekeywords=[2]{list,map,str,eval},
+	morekeywords=[3]{dolfinx,basix,ufl,classes,tensors,fem,mesh,la,nls,petsc},
+	morekeywords=[4]{dx,Constant,Mesh,element,FunctionSpace,Coefficient,TrialFunction,TestFunction,FacetNormal,sqrt,grad,inner,tr,Identity,dot,ds,conditional,lt,gt,eq,derivative,diff,tensor,variable,as_tensor,create_element,functionspace,Function,NonlinearProblem,LinearProblem,NewtonSolver,form,apply_lifting,set_bc,assemble_vector,assemble_matrix,locate_entities,locate_dofs_topological,dirichletbc,interpolate},
+	keywordstyle={[2]\color{green}},
+	keywordstyle={[3]\color{orange}},
+	keywordstyle={[4]\color{cyan}},
+	rulesepcolor=\color{pythonruler},
+	rulecolor=\color{pythonruler}
+}
+%\DeclareCaptionFormat{listing}{\rule{\dimexpr\textwidth+17pt\relax}{0.4pt}\par\vskip1pt#1#2#3}
+%\captionsetup[lstlisting]{format=listing,singlelinecheck=false, margin=0pt, font={sf},labelsep=space,labelfont=bf}
+\DeclareCaptionFormat{listing}{\tiny\raggedleft#1#2#3}
+\captionsetup[lstlisting]{format=listing,singlelinecheck=false, margin=0pt, font={sf},labelsep=space,labelfont=it}
+
+
+\title{\f{} and MFEM libraries comparison  }
+%\author{	Alexis Salzman }
+
+\begin{document}
+\maketitle
+
+\begin{abstract} 	
+	This work provides a partial comparison of two   libraries:  \f{} and MFEM . The evaluation focuses on various aspects such as the problem encoding complexity, available documentation, computational performance, input/output (I/O) capabilities, support for parallelism, dependency constraints imposed by the various software tools used by these libraries,  .... By examining these factors, we aim to offer some insights into the strengths and weaknesses of each library,  enlightening researchers and engineers in selecting a  suitable tool for their specific computational needs. The analysis includes practical coding examples, performance benchmarks, and a detailed discussion on the ease of use and scalability, providing a partial assessment of each library's capabilities and usability. This document can also be used as a light tutorial to start encoding in one library knowing the other.
+\end{abstract}
+\section{Introduction}
+\f{} and MFEM are both open-source libraries used for solving partial differential equations (PDEs) using finite element methods (FEM).
+The target audience for this document is diverse: it ranges from newcomers to both codes ( but familiar with the principle of the finite element and with the formulation of a physical problem in weak form)  who are looking for insights to help them choose one or the other, to users who are tempted to switch from one to the other, to intermediate users who are looking at some details in one library with a view to possibly using the approach of the other library,...
+
+Written  primarily  in Python with core components in C++, \f{}  focuses on providing a high-level, user-friendly interface to FEM. It is designed to be accessible to users with minimal programming experience, without compromising on computational performance and scalability.
+It is part of the FEniCS project, with significant contributions from the scientific computing community.
+
+MFEM is primarily written in C++ with interfaces for Python. It focuses on being a high-performance, scalable finite element discretization library. MFEM requires more familiarity with programming, particularly C++, for advanced use. It is developed by the Center for Applied Scientific Computing at Lawrence Livermore National Laboratory. 
+
+
+As free libraries, they can be downloaded from  \url{https://fenicsproject.org/} for \f{}(version 0.8.0 in this work) and from  \url{https://mfem.org} for MFEM (version 4.7.0 in this work). Both offers a wide range of possibilities for solving various physical problems in a fairly general way.  To get an idea of how problems are formulated in each library, a series of examples will be used to compare them. In this work only parallel example will be used. These examples are structured so that the following topics, common to many simulations using FEM libraries, can be compared:
+\begin{enumerate}
+	\item Initialize the library\label{point_init}:
+	\begin{itemize}
+		\item Put in place MPI context.
+		\item Parse command-line options.
+	\end{itemize}
+\item Mesh construction\label{point_mesh}: 
+	\begin{itemize}
+	\item Read or create the mesh.
+	\item Distribute the mesh in parallel MPI context
+	\item Eventually refine the mesh.
+    \end{itemize}
+\item Define a finite element space using the mesh and a given polynomial order. \label{point_space}
+
+\item Define material properties:\label{point_mat}
+\begin{itemize}
+	\item Potentially different for some sub-domain.
+	\item Not forcefully constant during the simulation.
+\end{itemize}
+\item Boundary Conditions and Load:\label{point_bc}
+\begin{itemize}
+	\item Define essential boundary conditions (Dirichlet)
+	\item Set up the right-hand side or the residual (Neuman,...)
+\end{itemize}
+\item Linear or non-linear problem creation:\label{point_matrix}
+\begin{itemize}
+	\item Assemble various matrices and vectors.
+	\item In non-linear set up initial solution.
+\end{itemize}
+\item Solve the system:\label{point_solve}
+\begin{itemize}
+	\item In general pass a linear system to an external library dedicated to solve this kind of system in parallel.
+	\item In non-linear loop to update material properties and solve again the new linear system up to convergence (null residual)
+\end{itemize}
+\item Output:\label{point_out}
+\begin{itemize}
+	\item Save the different field in files that can be read by visualization tools
+\end{itemize}
+\end{enumerate}
+
+The following section comments on each of these topics. The implementation of the examples in the  section \ref{example} is not fully provided in this document. 
+Only parts of the code are used in support of the main explanations.
+The full implementation can be found in the following repository:
+\noindent \url{https://github.com/SalzmanA/fem-libraries.git}
+
+\section{Examples\label{example}}
+\subsection{Mechanic}
+\subsubsection{Asymmetric traction/compression elasto-damaged constitutive law}\label{expl1}
+
+This test case is designed to evaluate the behavior of a square sample (1mx1m) under traction or compression (Dirichlet boundary condition) and volume loading ($\vm{f}$)
+, considering an elasto-damaged constitutive law that accounts for asymmetric traction/compression responses. The model employs a poly-crystalline structure generated by Neper library\cite{Neper,QUEY20111729}, introducing variability in material properties to mimic real-world conditions :
+
+\begin{itemize}
+	
+\item Mesh Generation: The mesh for the square domain $\Omega$ is obtained using Neper and saved in  gmsh format(Figure \ref{mesh}).
+\item Damage Field:  An arbitrary damage field is created, introducing total stiffness losses at certain grain interfaces (Figure \ref{damage}).
+\item Grain Properties: Grains are modeled as isotropic materials, with no material orientation inside a grain.
+\item Young's Modulus Variation: Each grain has a different Young's modulus, with random values in the range [5e6Pa, 1e8Pa] (Figure \ref{E_young}).
+\end{itemize}
+\begin{figure}
+	\includegraphics[width=1.\textwidth]{neper.png}
+	\caption{2D Mesh created by Neper (color represent different physical properties tag). \label{mesh}}
+\end{figure}
+\begin{figure}
+	\centering
+	\includegraphics[width=1.\textwidth]{dam.png}
+	\includegraphics[width=0.7\textwidth]{dam_extrude.png}
+	\caption{Imposed damage computed for a refined mesh, in MFEM (left top) \f{\_C++}(center top) and in \f{\_py}(right top). Bottom image presents  an elevation of the damage field (z=d) with value at nodes using a lateral view angle. It aims to shows the chosen arbitrary damage profile imposed around border of grain fixed to 1 . \label{damage}}
+\end{figure}
+\begin{figure}
+	\includegraphics[width=1.\textwidth]{E.png}
+	\caption{Grain Young's Modulus values in Pa after creation in MFEM (left), \f{\_C++}(center) and  \f{\_py}(right).\label{E_young}}
+\end{figure}
+Spatial discretization will use order 1 Lagrange polynomial. The constitutive law in 2D is based on the following potential:  
+\begin{equation}
+	\psi(\tens{\epsilon},d)=\frac{\lambda}{2}\left( 1-\alpha d\right)tr(\tens{\epsilon})^2 + \mu \sum_{i=1}^{2}(1-\alpha_i d){\Lambda_i}^2 
+	\label{freeenergy}
+\end{equation}
+where:
+\begin{itemize}
+	\item $\lambda$ and $\mu$ are the Lam\'{e} elasticity coefficients.
+	\item $\Lambda_i$ are the eigenvalues of the strain tensor $\tens{\epsilon}$.
+	\item $ \alpha_i$ and $\alpha $ are coefficients introduced to take into account an asymmetric behavior in traction/compression:
+	\begin{itemize}
+		\item $ \alpha_i = 0 ~ if~ {\Lambda_i}<0$
+		\item $ \alpha_i = 1 ~ if~ {\Lambda_i}\geqslant 0$
+		\item $ \alpha = 0 ~ if~ tr(\tens{\epsilon})<0$
+		\item $ \alpha = 1 ~ if~tr(\tens{\epsilon})\geqslant 0$
+	\end{itemize}
+\end{itemize}
+
+The Cauchy stress tensor $\tens{\sigma}$ is  obtained from the free energy $\psi$ as follows:
+\begin{equation}
+		\tens{\sigma} = \frac{\partial\psi}{\partial\tens{\epsilon}}
+		\label{sigfromphi}
+\end{equation}  
+
+The variationnal formulation to encode in the libraries considering non-linear behavior is thus the residual computation. If  $\mathcal{M}$ is the  continuous space of the problem defined on $\Omega$ and compatible with the Dirichlet boundary conditions ($\mathcal{M}_0$ being $\mathcal{M}$ with null Dirichlet boundary conditions) the residual is given by:
+
+\begin{equation}
+	F\left( \vm{u},\vm{v} \right)_{\Omega} =\stretchint{5ex}_{\Omega}
+	\tens{\sigma \left( \vm{u} \right)}:\tens{\epsilon}\left( \vm{v}\right)\mathrm{d}V
+	-\stretchint{5ex}_{\Omega} \vm{f}.\vm{v}\mathrm{d}V 
+	\label{formF}
+\end{equation}
+with:
+\begin{itemize}
+	\item $\vm{u}\in \mathcal{M}$ is the displacement at current non-linear iteration
+	\item $\vm{v}\in \mathcal{M}_0$ is the test function
+	\item $\vm{f}$ is an arbitrary imposed Neumann load (in Newton), shown in the figure \ref{load} and given by the equation \eqref{load1}.
+\end{itemize}
+
+\begin{equation}
+\vm{f}=\left\{ \begin{array}{l}
+		-100000 (1600-(y-0.5)^2-500)*(x-0.5)^3\\
+		0.
+\end{array}\right.
+\label{load1}
+\end{equation}
+\begin{figure}
+	\includegraphics[width=1.\textwidth]{load.png}
+	\caption{Arbitrary imposed interior loading interpolated on refined mesh by MFEM (left), \f{\_C++}(center) and by \f{\_py}(right). It is the X component value of the 2D vectorial forces $\vm{f}$ that is shown.\label{load}}
+\end{figure}
+The Jacobian matrix needed in the non-linear resolution is given by differentiating \eqref{formF}.
+
+Finally, small strains and displacements are assumed which  implies the following strain tensor/displacement relation: 
+\begin{equation}
+	\tens{\epsilon}=\frac{1}{2}\left(\nabla\vm{u} +\left(\nabla \vm{u}\right)^t\right)~\text{on}~\Omega
+	\label{eps}
+\end{equation}
+The first $i_1$ and the second $i_2$ invariant of $\tens{\epsilon}$ are given by the following formulas:
+ \begin{equation}
+ 	\begin{array}{l}
+ 		i_1=tr(\tens{\epsilon})\\
+ 		i_2=\frac{1}{2}\left( tr(\tens{\epsilon}^2)- i_1^2 \right)
+ 	\end{array}\label{invariants} 
+ \end{equation}
+
+\section{API and documentation}
+
+As already mentionned the \f{} language is primarily Python with core components in C++. 
+In fact, the C++ sources are divided into the following libraries:
+\begin{itemize}
+	\item dolfinx: Problem solving environement
+	\item basix: \f{} finite element basis evaluation library 
+	\item ufl: UFL - Unified Form Language 
+	\item ffcx: Form compiler for finite element forms 
+\end{itemize}
+The Python API follows this division and provides modules for each library. 
+It also gives some extra features not (yet) available in C++ like gmshio.  
+
+
+\bigskip
+For MFEM it is the other way round, the language is primarily C++ with interfaces to Python.
+The C++ sources are packaged in a monolithic library called MFEM, and the Python warping is provided by PyMFEM (has not yet been tested in this study).
+The C++ API is encapsulated in the unique namespace \mycode{mfem}.
+	
+\bigskip
+The table \ref{libstd} gives the requirements for C++ compilers and python interpreters, and the following setting is  used in this document for  \f{} C++ code:
+\begin{table}
+	\centering
+	\begin{tabular}{|c|c|c|c|}
+		\hline
+		\multicolumn{2}{|c|}{\f{}}&\multicolumn{2}{c|}{MFEM}\\
+		\hline
+		C++&python&C++&python
+		\\
+		\hline
+		C++20&\multirow{2}{*}{3.10}&\multirow{2}{*}{C++11}&\multirow{2}{*}{?}\\
+		C++23 add-on&&&\\
+		\hline
+	\end{tabular}
+	\caption{ Required standard/version to compile/run\label{libstd} }
+\end{table}
+ 
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=typedeffenicsx]
+	using namespace dolfinx;
+	typedef PetscScalar scalar;
+	typedef scalar_value_type_t<scalar> scalar_dolf;
+\end{lstlisting}
+and MFEM code:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=typedefmfem]
+	using namespace mfem;
+\end{lstlisting}
+
+	
+In terms of documentation and community, \f{} has a strong forum (\url{https://fenicsproject.discourse.group}) inherited from the FEniCS project. 
+All APIs are documented at \url{https://docs.fenicsproject.org}. 
+An "official" tutorial is available at \url{https://jsdokken.com/dolfinx-tutorial/} and some interesting contributions can be found on "unofficial" sites such as J. Bleyer's (\url{https://bleyerj.github.io/comet-fenicsx/index.html}) or J.S. Doken's (\url{https://jsdokken.com/tutorials.html}).
+From an external point of view, the \f{} project is (at the time of writing) in a state of intense development, so the material that can be found on the web can sometimes be a bit confusing (examples based on an old APi or related to FEniCS, site related to unofficial addons more or less up to date with the current version, thread in the forum obsolete due to library evolution, ....  ). 
+But as development moves fast, so does documentation.
+
+For its part, MFEM makes all the interesting material available on its website (\url{https://mfem.org}), with a discussion forum within the source github repository: \url{https://github.com/orgs/mfem/discussions}.
+
+\bigskip
+For both libraries, many examples provide a nice tutorial to get into the implementation of a problem. 
+The API documentation provides the remaining ingredient to complete the encoding.
+\section{Initialize (point \ref{point_init})}
+In parallel, the minimum to implement is the initiation of the MPI library, and as FEnicsx and MFEM may use it, in addition, the initiation of PETSC. 
+With \f{} C++ API,   a logging tool can also be set up at start-up, using the following code:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+// Init logging backend of dolfinx (loguru)
+// tuned by -dolfinx_loglevel <level> option
+dolfinx::init_logging(argc, argv);
+// init petsc environment
+// imply init distributed environement
+PetscInitialize(&argc, &argv, nullptr, nullptr);
+std::string log_name = "what you want distinquishing PID";
+loguru::set_thread_name(log_name.c_str());
+// very verbose
+loguru::g_stderr_verbosity =loguru::Verbosity_INFO;
+// only warning
+loguru::g_stderr_verbosity =loguru::Verbosity_WARNING;
+\end{lstlisting}
+With the version used in this study (0.8), \f{} uses the logger library loguru. 
+But they switched to the spdlog library in the next release.
+Here using \mycode{PetscInitialize} function (and \mycode{PetscFinalize} at the end of the program) make Petsc library call the \mycode{MPI_init} function. 
+If Petsc is not to be used,  \mycode{MPI_init} (or \mycode{MPI_Init_thread}) must be called directly (and \mycode{MPI_finalize} at the end of the program). 
+
+The python conterpart corespond to the importation of all used module as  follow:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+	from scipy import sparse
+	from mpi4py import MPI
+	import numpy as np
+	from pathlib import Path
+	from ctypes import CDLL
+	import sympy as sp
+	import ufl
+	from ufl.classes import (Mesh,FunctionSpace,Coefficient,Constant,
+	TrialFunction,TestFunction,FacetNormal)
+	from ufl import ( sqrt,grad,inner,tr,Identity,dot,dx,ds,
+	conditional,lt,gt,eq)
+	import basix	
+	from dolfinx.io import XDMFFile
+	from dolfinx.io import VTXWriter
+	from dolfinx import fem
+	from dolfinx import mesh
+	from dolfinx import la
+	from dolfinx import nls
+	from dolfinx import cpp
+	from dolfinx.fem import petsc
+	from dolfinx.nls import petsc
+	import adios4dolfinx
+	from petsc4py import PETSc
+\end{lstlisting}
+
+MFEM does not seem to rely on a  logger library strategy. Information is output to a stream on demand, using a special printing method or setting a log level with some algorithms. Or, at compile time, the MFEM\_DEBUG macro, if set, forces messages to be output from any routine that encodes them.
+Compared to \f{}, the \mycode{MPI_init} function must be called in MFEM code using its \mycode{mfem::Mpi} class, which encapsulates the MPI library, with the \mycode{mfem::Mpi::Init} method (and the \mycode{mfem::Mpi::Finalize} at the end of the program).
+MFEM provides a handy options parser, unlike \f{}, which allows you to encode options in the source and modify them at runtime with the parameters passed to the program at startup.
+In the following code, for example, \mycode{newton_rel_tol} is set to 1.e-7 in the source and can be changed at runtime using the \mycode{-rel} or \mycode{--relative-tolerance} option:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+Mpi::Init(argc, argv);
+const char *petscrc_file = "";
+OptionsParser args(argc, argv);
+args.AddOption(&petscrc_file, "-petscopts", "--petscopts", "PetscOptions file to use.");
+args.AddOption(&verbose, "-v", "--verbose", "-nv", "--not-verbose", "Output extra informations.");
+real_t newton_rel_tol = 1e-7;
+real_t newton_abs_tol = 5e-8;
+args.AddOption(&newton_rel_tol, "-rel", "--relative-tolerance", "Relative tolerance for the Newton solve.");
+args.AddOption(&newton_abs_tol, "-abs", "--absolute-tolerance", "Absolute tolerance for the Newton solve.");
+args.Parse();
+if (!args.Good()){
+   	if (mpi_rank == 0)  args.PrintUsage(cout);
+   	return 1;
+   }
+if (mpi_rank == 0)  args.PrintOptions(cout);
+   
+\end{lstlisting}
+To use Petsc in MFEM, the program must call \mycode{MFEMInitializePetsc} (and \mycode{MFEMFinalizePetsc} at the end):
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+MFEMInitializePetsc(NULL, NULL, petscrc_file, NULL);   
+\end{lstlisting}
+Here a \mycode{petscrc_file} file can be provided at runtime to tune Petsc.
+
+\section{Mesh(point \ref{point_mesh})\label{Mesh}}
+\subsection{Reading\label{Mesh_reading}}
+In most example, MFEM use the following strategy that start from a serial mesh defined in a file:
+\begin{itemize}
+	\item Read the file in all process (via \mycode{mfem::Mesh} constructor) and create a serial  instance of the full mesh. This implies that the mesh is relatively coarse to fit in memory on all processes.
+		\item Create a parallel mesh instance (\mycode{mfem::ParMesh}) in all process using the serial mesh instance and a partition provided by the user or, by default, computed by METIS (from the full serial mesh dual-graph). After construction, on each process, this parallel mesh only contains the part of the serial mesh related to the partition with the  rank id of the process.
+		\item Refine the coarse distributed mesh.
+\end{itemize}
+
+
+
+
+
+
+The above scheme works with MFEM (conforming, non conforming, nurbs), Netgen, TrueGrid, VTK, GMSH, NETCDF, Cubit file format.
+
+One constructor of \mycode{mfem::ParMesh} class accepts also a stream argument that give the ability to read a parallel mesh with each MPI rank using its own file/stream. It has not been tested but from source file investigation it looks like it works only with parallel MFEM mesh format (i.e. with a set of file/stream with each having specific information related to mesh distribution). 
+
+With C++ API, \f{} can use XDMF reader (\mycode{dolfinx::io::XDMFFile::read_mesh}) to load mesh into \mycode{dolfinx::mesh::Mesh<T>} instance. Compare to MFEM above strategy this method can, if XDMF file use HDF5 storage format, read on each process only a part of the serial mesh stored in this file.
+The mesh is then redistributed using the partition created in parallel by the user or by ParMetis (or PtScotch or Kahip).
+With this method, if the starting mesh is very fine, there can be no memory problem because a process only holds a portion of the mesh during the entire read.
+ The drawback is that the amount of communication is higher compared to the MFEM strategy, where all processes perform the same serial computation without exchanging information.
+ This can be seen in figures \ref{time_mesh} and \ref{time_mesh_r} with test case of section \ref{expl1}. The MFEM curve related to mesh reading is almost constant as all process do the same amount of work (reading,partitioning,filtering). In comparison, \f{} scale up to 8 processes and its reading performance stagnate or decrease with 16 process and above (parmetis is certainly using to much process for the given mesh dual-graph size, hardware i/o may be saturated and redistribution may involve too much communication)   
+ 
+ At the time of writing, the \f{} C++ API does not provide any other mesh reader for any other mesh format.
+ Only the Python API provides, in addition to XDMF,  interaction with Gmsh by directly translating a Python gmsh API mesh model into a Dolfinx mesh via gmshio.
+ By the way, it is this gmshio module that has been used to generate XDMF files from gmsh Neper files for the test case of the section \ref{expl1}:
+
+ \begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+ from mpi4py import MPI
+ from dolfinx.io import XDMFFile, gmshio
+ msh, c, e = gmshio.read_from_msh("path/to/gmsh/file", MPI.COMM_WORLD, gdim=2)
+ # arbitrary name
+ msh.name = "neper_dam" 
+ c.name = f"{msh.name}_cells"
+ e.name = f"{msh.name}_facets"
+ with XDMFFile(msh.comm, "path/to/xdmf/file", "w") as file:
+ 	file.write_mesh(msh)
+ 	file.write_meshtags(c, msh.geometry, geometry_xpath=f"/Xdmf/Domain/Grid[@Name='{msh.name}']/Geometry")
+ 	file.write_meshtags(e, msh.geometry, geometry_xpath=f"/Xdmf/Domain/Grid[@Name='{msh.name}']/Geometry")
+\end{lstlisting}
+ 
+ 
+ With the Python API, reading the xdmf file gives the same kind of performance as with the C++ API, as can be seen in figures \ref{time_mesh} and \ref{time_mesh_r} (variation are certainly due to I/O hardware).
+ 
+ 
+ \begin{figure}
+ 	\includegraphics[width=1.\textwidth]{part.png}
+ 	\caption{Mesh distribution on 64 processes by MFEM (left) \f{\_C++}(center) and \f{\_py}(right) of the test case of section \ref{expl1}.\label{Partition}}
+ \end{figure}
+  
+\subsection{Partitioning\label{partitioning}} 
+ In figure \ref{Partition} the mesh distribution of the test case of section \ref{expl1} for both library is shown for 64 processes. 
+ The partitioning is naturally\footnote{See paper on ParMetis/Metis} not the same as MFEM use Metis on full serial mesh dual-graph, and \f{}, Parmetis on an arbitrary distributed mesh dual-graph. In both case the nested dissection algorithm  roughly divided the full square mesh in four blocks themselves divided in four sub blocks and so on. It appears more clearly with MFEM/Metis where pids are following the dissection and no inital mesh distribution interferes in the process of partionning.
+ 
+ 
+ The term "ghost" used in MFEM and \f{} when using distributed meshes means that some entities are duplicated between processes to achieve certain objectives.
+ At the very least, all entities at the boundary between different processes are duplicated in all those processes (i.e. in 1D nodes, in 2D nodes and edges and in 3D nodes, edges and faces). This ensures that the elements connected to the boundaries of a process have the correct geometric and topological definition. 
+ 
+ Otherwise, cells can be duplicated in all connected processes for specific calculations.
+ With \f{} it's when  reading a mesh that the \mycode{dolfinx::mesh::GhostMode} can be selected. It can be:
+ \begin{itemize}
+ 	\item none: There is no cell duplication
+ 	\item shared\_facet:   For an edge (2D) or face (3D) inside the part but at the boundary of 2 processes, all its related cells are present in both processes.
+ 	\item shared\_vertex: Apparently, at the time of writing, this is equivalent to shared\_facet for 2D/3D mesh. It may be related to 1D meshes that have not yet been tested. 
+ \end{itemize}
+ \begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{ghost.png}
+	\caption{\f{} ghosting illustration with a mesh distributed over 2 processes. On the left, the mesh distributed on 2 processes without ghost cell (one colour for each process). On the right, cells present on one process with (bottom) and without (top) ghost cells. \label{ghost}}
+\end{figure}
+Figure \ref{ghost} illustrates the ghost modes of \f{} with a simple 2D mesh distributed over 2 processes.
+ 
+
+MFEM does not have ghost cells in its mesh structure. Only references to neighbours in other processes are created and communication occurs when data needs to be used for computation.
+
+In any case, to keep the numbering (mesh/dof) consistent, a notion of "owner" is introduced for ghost entities. Among all processes holding an instance of an entity, one is arbitrarily chosen to "own" that entity. Numbering is thus imposed by "owner" processes, and other processes inherit this numbering. For example, in both libraries, vertices are owned by the process with the smallest process ID.
+
+\subsection{Refining} 
+ 
+Both libraries provide a refinement strategy (local or global). MFEM is more general in this aspect as it can generate non-conforming mesh (with control of hanging entities) and is able to derefine refined zone based on some error criteria.
+This generality is made possible by a dedicated mesh database that stores the history of the refinement. In contrast, FEniCS's refinement tools generate a new mesh instance (or a set of information describing a mesh) and optionally the parent cell/face indices of child cells/faces.  
+ 
+Only uniform refinement has been tested in this study.
+The \mycode{UniformRefinement} method of the class \mycode{mfem::Mesh} of MFEM uses a simple algorithm to split cells:
+\begin{itemize}
+	\item generate a new vertex at the center of each edge
+	\item based on the original vertex and the new middle vertices, generate sub-element: 2 in 1D, 4 in 2D, 8 in 3D (for pure tetrahedral meshes, an "A" or "B" algorithm with different quality control is proposed). 
+\end{itemize}
+
+\f{} with \mycode{dolfinx::refinement::plaza::refine} function use a more sophisticated algorithm related to the article \cite{PLAZA2000195}. In the 2D example of section \ref{expl1}
+they provide almost the same refined mesh except that some element have been flipped (certainly to respect some mesh quality criteria) by \f{}(figure \ref{element_swap}).
+ \begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{ref2_mesh_difference.png}
+	\caption{MFEM(red) and \f{}(blue) refined mesh of the test case of section \ref{expl1}. Both have the same number of nodes. MFEM follows always the same refinement pattern. In contrast, \f{} has spited some parallelipiped in a different way resulting on edges not parallel to any edges of the original refined element(center left elements in the view)).  \label{element_swap}}
+\end{figure}
+\subsection{Creating}
+Regarding mesh creation on the fly, \f{} propose 1D (\mycode{create\_interval})/2D (\mycode{create\_rectangle})/3D (\mycode{create\_box}) interval, rectangle or box creation for quick testing. MFEM proposes \mycode{Mesh::MakeCartesian1D}, \mycode{Mesh::MakeCartesian2D} and \mycode{Mesh::MakeCartesian3D} for the same purpose.
+And in both libraries, the mesh class API provides a way to code the creation of a mesh from scratch.
+ 
+
+\section{Space and field(point \ref{point_space})\label{spaceField}}
+With a mesh in hand, the creation of a finite element discretisation of a domain requires the definition of the finite element type.
+\subsection{Finite element}
+MFEM provides a large collection of finite elements of arbitrary order. They are grouped by family type represented by class that are all deriving from \mycode{mfem::FiniteElementCollection}. In 1D, 2D and 3D, families are (not exhaustive):
+\begin{itemize}
+	\item \mycode{mfem::H1\_FECollection}: Arbitrary order H$^1$-conforming (continuous) finite elements. 
+	\item \mycode{mfem::L2\_FECollection}: Arbitrary order "L2-conforming" discontinuous finite elements.
+	\item \mycode{mfem::ND\_FECollection}: Arbitrary order H(curl)-conforming Nedelec finite elements.
+	\item \mycode{mfem::RT\_FECollection}: Arbitrary order H(div)-conforming Raviart-Thomas finite elements.
+	\item ...
+\end{itemize}
+All these elements use a polynomial bases chosen at construction time. Note that not all elements can use all bases types. Selection is done using enumeration  of \mycode{mfem::BasisType} class: GaussLegendre, GaussLobatto(Lagrange), Serendipity, Positive (Bernstein), ...
+
+The following code creates a finite element collection (called \mycode{fec}) representing an H$^1$-conforming element of dimension 2 and order 1 using (default argument) Gauss-Lobatto polynomial bases:\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=feca]
+H1_FECollection fec(1, 2);
+\end{lstlisting}
+For order 1 elements that are not intended to be extended to a higher degree in the application, it is cheaper to use a handmade simple linear base as encoded in the linear collection:\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=fec]
+LinearFECollection fec;
+\end{lstlisting}
+This is illustrated by the performance analysis in section \ref{perfass}.
+
+In \f{} finite elements are related to the basix library. This library provides the class \mycode{basix::FiniteElement} which can hold any type of finite element. This class play the role of \mycode{mfem::FiniteElementCollection} but rely on generic structure to define finite elements compared to MFEM which use derivation for genericity. For a full list of basix built-in elements, see for example https://defelement.com/lists/implementations/. The type of element is chosen at instantiation time by calling the  \mycode{create\_element} function with the following arguments:
+\begin{itemize}
+	\item family: \begin{itemize}
+		\item arbitrary order Lagrange-like: P or "Lagrange","DP","DG","DQ" or "P" string in python
+		\item arbitrary order H(div)-conforming Raviart-Thomas: RT or "Raviart-Thomas", "N1F", "N1div", "Nedelec 1st kind H(div)", "RTCF", "NCF" or "RT" string in python
+		\item arbitrary order H(curl)-conforming Nedelec: N1E or "N1curl", "Nedelec 1st kind H(curl)", "RTCE", "NCE" or "N1E" string in python
+		\item ...
+	\end{itemize}
+	\item CellType; type of element (point, interval, triangle, tetrahedron,
+	quadrilateral, hexahedron, prism or pyramid)
+	\item degree: arbitrary order to use
+	\item lagrange\_variant: specify the polynomial bases to be used and the DOF placement:
+	\begin{itemize}
+		\item unset: Use a default for each family, which depend on many aspects.
+		\item equispaced: equi distance placement
+		\item legendre: Legendre instead of Lagrange polynomial
+		\item bernstein: Bernstein instead of Lagrange polynomial
+		\item ...
+	\end{itemize}All variants do not work with all element types. 
+	\item discontinuous: If True element is discontinuous. The discontinuous element will have the same DOFs as a continuous element, but the DOFs will all be associated with the interior of the cell. 
+\end{itemize}
+With C++ API you can also call directly the function that creates an element related to a specific family (\mycode{basix::element::create\_lagrange} for P family,...). 
+
+But in  \f{} there is no need to instantiate the basix element as in fact all the problem is defined has UFL expression (see \ref{Fenicx_form}). So in Python the function \mycodepy{basix.ufl.element} can be used instead of \mycodepy{basix.create_element} to create a UFL compatible element. It use the same set of parameter as \mycodepy{basix.create_element}. The following code creates a triangular finite element (called \mycodepy{elem}) using Lagrange polynomial bases of order 1 to interpolate 2-dimensional vector field on the element:\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python,label=elem]
+	elem = basix.ufl.element("Lagrange","triangle",1,shape=(2, ))
+\end{lstlisting}
+With the C++ API, the above code is placed in the Python script interpreted by ffcx (see section \ref{Fenicx_form}).
+
+\subsection{Space} 
+With the mesh and after instantiating an element (or a collection) of a given type, it is possible to create the finite element space on the domain.
+ 
+In MFEM, with the finite element collection declared in listing \ref{feca} or \ref{fec} and a \mycode{mfem::ParMesh} pmesh (see section \ref{Mesh}), the space to interpolate a 2-dimensional vector field is created by the following instruction:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=spacec]
+ParFiniteElementSpace space(pmesh, &fec, 2, Ordering::byVDIM);
+\end{lstlisting}
+The \mycode{Ordering::byVDIM} value means that dofs are stored in an element by first looping over the  vector dimension (inner loop), then over the nodes (outer loop).
+Alternatively, the user can select \mycode{Ordering::byNODES}, which loops first over the
+ nodes (inner loop) and then over the vector dimension (outer loop).
+
+
+
+With \f{}, using the Python API, the code to create a finite element space on the mesh given by \mycodepy{domain} with finite element \mycodepy{elem} declared in listing \ref{elem}, is:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+space = dolfinx.fem.functionspace(domain, elem)
+\end{lstlisting}
+With the C++ API, the above code is placed in the Python script interpreted by ffcx and the space is retrieved as presented in  section \ref{Fenicx_form} listing \ref{generalfenicsxform}.  
+
+\subsection{Field}
+In MFEM, in parallel, a field can be created as an instance of the class \mycode{ParGridFunction}. An \mycode{x} field is created as follows, using the space defined in the previous section (listing \ref{spacec}):
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=xfield]
+	ParGridFunction x(space);
+\end{lstlisting}
+
+With \f{}, the same field would be constructed in Python as follows
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python,label=pyx]
+x=dolfinx.fem.Function(space,name='myfield')
+\end{lstlisting}
+And using the C++ API, considering that \mycode{V} is the space \mycodepy{space} collected from the Python script via ffcx (see for example listing \ref{generalfenicsxform}), the code is:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=fieldfenics]
+auto x = std::make_shared<fem::Function<scalar>>(V);
+x->name="myfield"
+\end{lstlisting}
+where use of shared pointer to encapsulate the field object is related to coefficients argument of \mycode{dolfinx::fem::create\_form} function (see section \ref{Fenicx_form}). In this example in Python and C++, the field name is set to a dummy value \mycode{myfield}.
+This is the name that will be attached to the field in the output files and will therefore be visible when the data is processed with Paraview or Visite or .....
+\section{Material property(point \ref{point_mat})\label{MatProp}}
+In the example in section \ref{expl1}, both libraries use cell tags to assign material to mesh elements. 
+These tags come from the original Gmsh mesh files generated by Neper (figure \ref{mesh}).
+
+With MFEM, Gmsh physical property are directly assigned to element attribute while reading mesh file. 
+The element attribute is a single integer that can be accessed using the \mycode{GetAttribute} method of the \mycode{mfem::Element} class.
+By default, no other data can be associated with elements.
+
+In \f{}, tags are information that can be anything. They are stored outside the mesh/entities object in a dedicated template class (\mycode{template<typename T> dolfinx::mesh::MeshTags<T>}).
+Therefore, when using gmshio, the Gmsh physical property must be transferred to the XDMF file in a separate location in the file tree structure(see section \ref{Mesh_reading}).
+And when reading the XDMF file, either from C++ or Python API, extra instructions are mandatory to read the \mycode{mesh::MeshTags} objects. For these objects, the tag values are obtained using the \mycode{values} method.
+
+These tags (integers) are then used with both libraries to set Young's modulus (and consequently Lamè coefficients $\lambda$ and $\mu$) using following expression:
+\begin{equation}
+	E(tag)=\frac{1.e^{8}-5.e^6}{199.}\times kr(tag)+5.e^6
+\label{etag}
+\end{equation}
+with $kr()$ a semi-random function of tag (based on rand function of stdlib) that return an integer between 0 and 199.
+
+For MFEM, the strategy adopted is to use a piecewise constant coefficient (\mycode{mfem::PWConstCoefficient}) directly for $\lambda$ and $\mu$. 
+This \mycode{mfem::PWConstCoefficient} class uses constants keyed from the element attribute numbers. 
+The \mycode{mfem::Vector} used to construct these objects are filled for each tag with the expressions of the Lamè coefficients as a function of Young's modulus given by \eqref{etag} and a constant Poisson's ratio value.
+
+For \f{}, the choice has been made to start from Young's modulus (E) and Poisson's ratio($\nu$) in the construction of the formulation as shown in \ref{Fenicx_form}. In this case, E is a \mycode{dolfinx::fem::Function} initialised with \eqref{etag} and $\nu$ is a \mycode{dolfinx::fem::Constant}.
+Perhaps starting from Lamè coefficients, as in MFEM, would be more computationally efficient, as the coefficient calculation would be skipped. But as the final formulation is itself written in C code, it's not obvious that we'll get any gain. Furthermore, replacing calls to  \mycode{dolfinx::fem::Function} and \mycode{dolfinx::fem::Constant} with two calls to  \mycode{dolfinx::fem::Function} may not be better.  (to be tested).  
+
+\subsection{Damage\label{mat_dam}}
+In the example in section \ref{expl1}, the material behaviour depends on a damage field. This field is constant throughout the simulation, but is calculated at the start based on an arbitrary setting of 1 at some grain boundary. The smoothing process, which produces the damage profile shown in figure \ref{damage}, is good for testing in parallel the interaction with the mesh database and field object of both libraries. The smoothing algorithm is very crude. It is presented in algorithm \ref{algo_dam}.
+\begin{algorithm}[h]
+\footnotesize
+\begin{algorithmic}
+	\State Create v\_dam\_cur and v\_dam\_new vectors to hold damage at nodes/dofs%\Comment{~}
+	\State Set damage to 1 in v\_dam\_cur at some grain boundary nodes
+	\For{iter\_smooth $\in[0,max\_smooth]$}
+	\State v\_dam\_new$\gets 0$
+	\For{ $i \in \mathfrak{L}$}
+	\If{v\_dam\_cur$[i]<0.01$}
+	\State v\_dam\_new$[i]\gets \displaystyle\sum_{k\in \mathfrak{N}_i}\text{v\_dam\_cur}[k]$
+	\State Update ghost nodes v\_dam\_new values \Comment{~}
+	\State v\_dam\_new$[i]\gets \max \left( \text{v\_dam\_cur}[i],\frac{\text{v\_dam\_new}[i]}{card\left(\mathfrak{N}_i\right)} \right)$
+	\EndIf
+	\EndFor
+	\State v\_dam\_cur$\gets$v\_dam\_new
+		\For{ $i \in \mathfrak{L}$}
+	\State v\_dam\_new$[i]\gets \displaystyle\sum_{k\in \mathfrak{N}_i}\text{v\_dam\_cur}[k]$
+	\State Update ghost nodes v\_dam\_new values \Comment{~}
+	\State v\_dam\_new$[i]\gets \max \left( \text{v\_dam\_cur}[i],\frac{\text{v\_dam\_new}[i]}{card\left(\mathfrak{N}_i\right)} \right)$
+	\EndFor
+	\State v\_dam\_cur$\gets$v\_dam\_new
+	
+	\EndFor
+\end{algorithmic}
+\caption{Rough damage smoothing algorithm. $\mathfrak{L}$ is the set of node indices local to a process. $\mathfrak{N}_i$ is the set of nodes whose index is local to a process and connected to node $i$ by an owned edge. Inside the general loop, the first loop at node enlarges the non-zero damage zone and the second loop smooths and enlarges all non-zero damage zones. The general loop is just a repetition ( times) of the 2 loops on nodes. At the end, v\_dam\_cur contains the smoothed field. The $\triangleright$ icon indicates a communication step.\label{algo_dam}}
+\end{algorithm}
+It is mainly a loop to repeat an averaging process on all nodes using their topological neighbourhood. This averaging process is performed twice per loop. Once to enlarge the non-zero damage zones, examining only nodes with damage below a certain arbitrary threshold (0.01). Twice to average all the nodes and thus smooth the damage zone.
+The averaging process required some communication as the topological neighbourhood of a node can be scattered in different domains/processes.
+
+This algorithm has been used in MFEM and \f{} C++ implementations. In both cases, the underlying data array of the \mycode{d} field object was used directly (thanks to the order 1 Lagrange simplicity) to speed up the computation. In MFEM this was done by providing the underlying data array at construction time (avoiding costly use of \mycode{mfem::GridFunction::GetNodalValues} for example). And in \f{} it was done by calling \mycode{d->x()->mutable_array()} method, which directly gives a reference to the underlying data array.
+The performance shown in figure \ref{time_dam} and \ref{time_dam_r} shows that both implementations scale relatively well despite the presence of the test that introduces imbalance.
+Both library provides method to theire field class that easely scatter/gather information at ghost nodes.
+MFEM is 2 to 6 times slower than \f{} C++, but has an additional speed-up rate.
+This is certainly related to the use of roughly $max\_smooth \times \displaystyle\sum_{i\in \mathfrak{L}} card\left(\mathfrak{N}_i\right)$ operations. Depending on the threshold (0.01), this number can be augmented. In any case, when the domain is split in 2, $card\left(\mathfrak{L}\right)$ is roughly divided by 2, but also $card\left(\mathfrak{N}_i\right)$, for nodes on the process boundary,	 are reduced by some proportion. As the number of processes increases, the proportion of nodes at the domain boundary increases and the reduction in operation increases. But surprisingly, with the \f{} C++ implementation, this effect does not exist.
+
+Regarding the \f{} Python implementation, if algorithm \ref{algo_dam} is implemented as loops like in the C++ implementation, the performance is of course catastrophic. 
+In this study, after some testing, the two loops on the nodes were replaced by applying an operator to the field via a SciPy sparse matrix. Only loops on the topology remain to construct this operator. 
+This is done once, but still costs a lot. Optimising this part, if possible,  would require some additional effort not related to this study. 
+Therefore, the performance of the python implementation shown in figures \ref{time_dam} and \ref{time_dam_r} is poor (7 to 22 times slower) compared to other implementations in C++. This illustrates the fact that using the Python API requires care, so any algorithm not provided or constructable with \f{} must either be very well implemented or moved to a C/C++/Fortran implementation and encapsulated in a Python module.
+
+The introduction of this damage locally, at some grain boundaries, theoretically results in unbalanced parallel domains, as we have not considered the additional cost of damage treatment during partitioning. In figure \ref{imbalence} on the left view, it appears that of the 128 processes, only 20 processes are traversed by a non-zero damaged zone.
+\begin{figure}
+	\includegraphics[width=1.\textwidth]{imbalance.png}
+	\caption{Imbalence illustration with 128 cores (MFEM distribution). The left view is the superposition of the two right views, one of which is partially transparent. Only 20 processes is affected by the damage calculation.\label{imbalence}}
+\end{figure}
+As the damage zone is rather narrow, only a small proportion of the element in these 20 processes is affected by the damage calculation. This may explain why no major imbalance effect was observed in relation to the creation or effect of damage (see CV in table \ref{elapse}).
+\begin{table}\footnotesize 
+	\begin{tabular}{|c|l|c|c|c|c|c|}
+		\cline{2-7}
+		\multicolumn{1}{c|}{} & Task & val min & val max &CV& val avg & \% total avg \\ \hline
+		\multirow{4}{*}{\rotatebox{90}{ MFEM}}      &  All & 8.578603 & 8.633553& 0.196100 & 8.608193 & 100.0 \\ \cline{2-7} 
+		&  Define damage & 0.073467 & 0.074400 &0.002707& 0.073950 & 0.9 \\  \cline{2-7} 
+		&  Elementary vector & 0.130437   & 0.164723  & 0.055433 &      0.134700 &          1.6 \\ \cline{2-7} 
+		&  Elementary matrix & 0.078890  &  0.105820 & 0.067967& 0.083190 & 1. \\ \hline
+		\multirow{4}{*}{\rotatebox{90}{\f{}}}      & All  & 13.518510 &     13.520770 &     0.004013 &     13.519100  & 100.0 \\ \cline{2-7} 
+		&  Define damage & 0.042953&     0.043807&   0.001817 & 0.043407 &         0.3  \\ \cline{2-7} 
+		&  Elementary vector & 0.046653 &      0.053423       &     0.006133 &      0.049870 &          0.4\\ \cline{2-7} 
+		&  Elementary matrix & 0.078733 &     0.088870 &      0.011107 &      0.081627 &          0.6 \\\hline
+	\end{tabular}
+\caption{Elapsed times in seconds of some tasks related to damage for a simulation  with 128 processes (intermediate implementation)."val min" and "val max" are respectively the minimum and maximum computing time among all processes for the execution of the task."val avg" is the mean execution time of all processes to complete the task. The "CV" (100 $\times$"standard deviation"/"val avg"), representing the imbalance, is the coefficient of variation  multiplied by 100  to mimic a percentage of variation compare to mean value. "\% total avg" represent percentage of "val avg" of a task compare to "All"\label{elapse}}
+\end{table}
+Some calculations, not presented here, confirm (see CV in  table \ref{elapse_large}) that imbalance appears when the thickness of the damage band is increased (larger $max\_smooth$ in algorithm \ref{algo_dam}) and thus the proportion of elements with damage for these 20 processes is increased.
+\begin{table}\footnotesize 
+	\begin{tabular}{|c|l|c|c|c|c|c|}
+		\cline{2-7}
+		\multicolumn{1}{c|}{} & Task & val min & val max &CV& val avg & \% total avg \\ \hline
+		\multirow{4}{*}{\rotatebox{90}{ MFEM}}      &  All & 12.22343 & 12.26745& 0.10736 & 12.24595 & 100.0 \\ \cline{2-7} 
+		&  Define damage & 0.94938 & 0.95046 &0.00204& 0.94988 & 7.8 \\  \cline{2-7} 
+		&  Elementary vector & 0.17121   & 0.22073  & 0.09661 &      0.19193 &          1.6 \\ \cline{2-7} 
+		&  Elementary matrix & 0.10981  &  0.16517 & 0.16370& 0.14177 & 1.2 \\ \hline
+	\end{tabular}
+	\caption{Same type of result as in table \ref{elapse} for a larger damage band thickness simulation not shown in this study, which converges in 2 more non-linear iterations.\label{elapse_large}}
+\end{table}
+  
+In any case, when distributing the mesh, both libraries allow the user to select a domain partition that can take damage costs into account if needed.
+\section{System creation(point \ref{point_matrix})\label{systemcreation}}
+System creation is related to variational expression of the problem. From finite element discretizations of variational forms, elementary vectors and matrices are computed and assemble into final system.
+The approaches to compute finite element discretizations of variational forms (like \eqref{formF}) range from purely formal descriptions, which are close to mathematical expressions, to purely C++ programming implementations.
+
+\subsection{\f{} variational expression \label{Fenicx_form}}
+\subsubsection{General overview\label{gen_over}}
+\f{} uses a formal description with a Unified Form Language (UFL). This description, provided by a Python script, is transformed into a C language code by the ffcx compiler. This code provides functions that transcript in elementary C instructions  the different form(s) and space(s) defined in Python script. Form functions, called "kernels",  are called by the assembly routine to obtain the elementary vector or matrix for a given finite element. When using full Python API this process is completely hidden to users that do not care to generate and branch kernels. With the C++ API, the user must branch the kernel compiled by ffcx using the following instruction, which illustrates the case of a linear and a bi-linear form defined on the same finite element space, on the full domain $\Omega$, using some coefficients and constants in the formulation:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=generalfenicsxform]
+// create function space object from python field "u"
+auto V = std::make_shared<fem::FunctionSpace<scalar_dolf>>(fem::create_functionspace(SPACE, "u", pmesh));
+// create linear form object
+auto lin_form = std::make_shared<fem::Form<scalar, scalar_dolf>>(fem::create_form<scalar>(*FORM_L, {V}, coefficients,constants, {}));
+// create bi-linear form object
+auto bilin_form = std::make_shared<fem::Form<scalar, scalar_dolf>>(fem::create_form<scalar>(*FORM_BL, {V,V}, coefficients, constants, {}));
+\end{lstlisting}
+where:
+\begin{itemize}
+	\item \mycode{pmesh} pointer (shared) pointing to Mesh object discretizing $\Omega$ domain.
+	\item \mycode{SPACE} is the name of the helper function generated by ffcx. It is used to create function space using function field name (i.e. name of the Python variable, here "u"). This function name starts with \mycode{functionspace_form_} followed by the name of the python script, followed by \mycode{_}, followed by the Python variable name of the considered form.
+	\item \mycode{FORM_L} is the name of the helper function generated by ffcx. It is used to create linear form using name which was given to the form in the  python script. This function name starts with \mycode{form_} followed by the name of the python script, followed by \mycode{_}, followed by the python variable name of the considered form.
+	\item \mycode{FORM_BL} is the same as \mycode{FORM_L} except that it is related to the bi-linear form defined in the python script. The difference  is also noticeable with  the  \mycode{const std::vector<std::shared_ptr<const FunctionSpace<scalar_dolf>>>} vector object given as second argument of the \mycode{fem::create_form<scalar>} function: with linear form this vector contains only one function space, and with bi-linear form it contains two function spaces (in this example the same one).
+	\item \mycode{coefficients} is a \mycode{std::map} that contains a set of functions defined on a finite element function space (here \mycode{V}) indexed by the \mycode{std::string} corresponding to their name as defined in the python script. They are the functions used in the form and/or bi-linear form.
+	\item \mycode{constants} is a \mycode{std::map} that contains a set of constants indexed by the \mycode{std::string} corresponding to their name as defined in the python script. They are the constants used in the form and/or bi-linear form.
+\end{itemize}
+Lets use the example \ref{expl1} to illustrate how formulations are encoded in the python script.
+First \f{} python module as to be include:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+import ufl
+from ufl.classes import (Mesh,FunctionSpace,Coefficient,
+                         Constant,TrialFunction,TestFunction,
+                         FacetNormal)
+from ufl import ( sqrt,grad,inner,tr,Identity,dot,dx,ds,
+                  conditional,lt,gt,eq)
+import basix
+\end{lstlisting}
+The \mycodepy{basix} module provides UFL finite element definition. All other definition commes from \mycodepy{ufl} module itself.
+
+The encoding of \eqref{formF} imply to define $\Omega$, $\mathrm{d}V$, $\vm{u}$, $\vm{v}$, $\vm{f}$, $\tens{\epsilon}$ and $\tens{\sigma \left( u \right)}$. This last one obtain from \eqref{freeenergy} by use of \eqref{sigfromphi} imply the definition of $\lambda$, $\mu$, $d$, $\Lambda_i$, $\alpha_i$ and $\alpha$.
+Encoding in UFL language start by defining $\Omega$ and its discretization related to a mesh made of finite elements (triangle here) interpolating function with polynomial bases of specific order (see section \ref{spaceField}). In this work $\vm{u}$ and $\vm{v}$ will be discretized by an order 1 Lagrange vectorial field with 2 components. The damage field $d$ will use an order 1 Lagrange scalar field. 
+As some material properties (Young's modulus $E$) are constant per element  but not the same in between elements, an order 0 discontinuous Galerking field will provide the appropriate space to set $\lambda$ an $\mu$ for all elements.
+The finite elements, mesh and function spaces encoding is thus the following:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+elem = basix.ufl.element("Lagrange","triangle",1,shape=(2, ))
+element_scal = basix.ufl.element("Lagrange", "triangle", 1)
+DGelement = basix.ufl.element("DG", "triangle", 0)
+domain = Mesh(elem)
+space = FunctionSpace(domain, elem)
+DGspace = FunctionSpace(domain, DGelement)
+space_scal = FunctionSpace(domain, element_scal)
+\end{lstlisting}
+where  \mycodepy{space} will be used for $\vm{u}$ and $\vm{v}$, \mycodepy{DGspace} will be used for $E$,
+and \mycodepy{space_scal} will be used for $d$. Not that \mycodepy{domain} here is a simple UFL mesh based on the basix element description. It is not the real mesh that is read in the C++ implementation.
+
+
+The damage field $d$ is encoded as a mathematical function defined on \mycodepy{space}.
+In this formulation $d$ is a constant field during the simulation with the damage  arbitrary fixed to a specific  value. Thus in UFL it must be defined with the UFL Coefficient definition as follows:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+d=Coefficient(space_scal)
+\end{lstlisting}
+ 
+In the same way Young's modulus $E$ and $\vm{f}$ load are defined by:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+E=Coefficient(DGspace)
+f=Coefficient(space)
+\end{lstlisting}
+The Poisson ration $\nu$ is constant on $\Omega$ thus the UFL Constant  is used to define it:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+nu=Constant(space)
+\end{lstlisting}
+Note that \mycodepy{d}, \mycodepy{f}, \mycodepy{E} and \mycodepy{nu} are just declaring UFL formal variable for the form \eqref{formF} but there concrete setting are done in the C++ implementation.
+
+
+
+
+The Lamè coefficients $\lambda$ and $\mu$, are based on Young's modulus $E$ and Poisson ratio $\nu$.
+They are simply expressed as mathematical expression\footnote{As mentioned in section \ref{MatProp}, $\lambda$ and $\mu$ may have been encoded directly as a field.} in python language that lead to UFL expression when parsed by ffcx compiler as they use UFL variables \mycodepy{E} and \mycodepy{nu}:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python,label=lamecoefpy]
+mu = E / (2.0 * (1.0 + nu))
+lmbda = E * nu / ((1.0 + nu) * (1.0 - 2.0 * nu))
+\end{lstlisting}
+In non-linear resolution, the displacement from the previous iteration ($\vm{u}$), is seen  as a constant function for the form thus it is defined with \mycodepy{Coefficient} definition. The test function $\vm{v}$ (named \mycodepy{delta_u} to avoid confusion with c++ \mycode{V} object) is created with the special \mycodepy{TestFunction} UFL definition. The incremental displacement  (named \mycodepy{du}, that play the role of trial function in Jacobian operator construction)   use \mycodepy{TrialFunction} for its definition.
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+u = Coefficient(space)
+delta_u = TestFunction(space)
+du = TrialFunction(space)
+\end{lstlisting}
+The strain tensor $\tens{\epsilon}$ is simply defined as a python function (\mycodepy{eps}) using formal UFL gradient operator and its transpose according to small strain assertion given by \eqref{eps}:
+
+
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python]
+def eps(x):
+	return 0.5*(grad(x) + grad(x).T)
+\end{lstlisting}
+
+Regarding stress tensor derived from potential \eqref{freeenergy} there is different way to treat this part as discussed bellow.
+In all case the idea is to obtain a python function called \mycodepy{sigma} that takes as argument a displacement field and return a rank-2 tensor. This lead to write form \ref{formF} as follow:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python,label=Ffenicsxpy]
+F=inner(sigma(u), eps(delta_u))*dx -  inner(f, delta_u)*dx 
+\end{lstlisting}
+where  \mycodepy{dx} stand for $\mathrm{d}V$ and \mycodepy{inner} define the inner product as a contraction over all axes of its two argument, that is the sum of all component-wise products.
+Finally, thanks to the automatic functional differentiation provided by ufl module the Jacobian operator corresponding to the  derivation of the form \eqref{formF} against \mycodepy{du} is given in one line by:
+ 
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python,label=Jfenicsxpy]
+J=ufl.derivative(F,u,du)
+\end{lstlisting}
+This illustrates the power of \f{} to simplify implementation of variational formulation as \mycodepy{J} bi-linear form is defined by one line compare to the full C++ implementation given for  MFEM in \ref{mfem_variational}.
+
+Using the full Python API, these UFL formal representations are used to create kernel over the creation of form object as in the following:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python,label=Formfenicsxpy]
+	lin_form=dolfinx.fem.form(F)
+\end{lstlisting}
+It's during this step that the ffcx compiler is called on the fly and the equivalent C++ code of listing \ref{generalfenicsxform} is done.
+
+Back to the UFL expression, the numerical and formal complexity in \mycodepy{sigma} comes from strain eigenvalue evaluation and potential derivation.
+The following subsection \ref{symb}, \ref{symbsym},  \ref{manual} and \ref{ufl} give some solutions and comments on different version of  \mycodepy{sigma}. In all cases, to stick to MFEM version, two tests are introduced  that check that if the damage is non-zero or if one strain tensor invariant (given by \eqref{invariants}) at least is non-zero, asymmetric potential \eqref{freeenergy} is used. Otherwise the following symmetric version is used : 
+\begin{equation}
+	\psi'(\tens{\epsilon},d)=(1- d)\left(\frac{\lambda}{2}tr(\tens{\epsilon})^2 + \mu \sum_{i=1}^{2}\sum_{j=1}^{2}{\epsilon_{ij}}^2 \right)
+	\label{freeenergysym}
+\end{equation}
+The first test is related to performance.
+If $d$ is zero in \eqref{freeenergy}, the $\alpha_i$ and $\alpha$ can be anything as they will vanish by the multiplication by $d$. Thus it is expansive to pass by eigenvalues computation and using \eqref{freeenergysym} is cheaper.
+The second test is also related to performance but  derivation can be an issue if both invariant are zero as disused below.
+
+
+
+\subsubsection{Symbolic\label{symb}}
+Thanks to python large collection of libraries it is possible to use symbolic python library SymPy on top of UFL implementation. The idea is to obtain $\tens{\sigma}$ with SymPy as a symbolic expression, translate it in strings that are used  to create UFL expression on the fly in \mycodepy{sigma} function. The advantage is that the differentiation of the potential \eqref{freeenergy} and the eigenvalues symbolic computation is  done  by SymPy if you are more familiar with this library. And  this library may provides nice simplified symbolic expression. 
+
+Firstly we define symbolic variables and symbolic strain tensor as a 2x2 matrix T (defined as symmetric):
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+import sympy as sp
+l,m,dam,psi,al,al1,al2=sp.symbols('lmbda mu d psi alpha alpha1 alpha2')
+T = sp.Matrix(2, 2, lambda i, j: sp.Symbol('T[%d, %d]' % (i, j), symmetric=True, real=True))
+\end{lstlisting}
+Note that the identifier of the symbolic variables must be the same as the UFL variable already defined ('lmbda' string for \mycodepy{lmbda}, 'mu' string for \mycodepy{mu} and 'd' string for \mycodepy{d}).
+ 
+Before describing the potential \eqref{freeenergy} the symbolic eigenvalues have to be computed with the help of the related SymPy function:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+eigv = T.eigenvals(multiple=True) 
+\end{lstlisting}
+The potential $\psi$  \eqref{freeenergy}, using SymPy symbolic variable defined above, is then:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+psi=(T.trace()**2)*(1-al*dam)*l/2+m*((1-al1*dam)*eigv[0]**2+(1-al2*dam)*eigv[1]**2)
+ \end{lstlisting}
+The stress tensor is then simply obtained as the following symbolic variable, result of the differentiation of \mycodepy{psi} by \mycodepy{T}:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+sig=sp.simplify(sp.diff(psi,T)) 
+\end{lstlisting}
+As  mentioned, first and second invariant of strain tensor \eqref{invariants} are also required in \mycodepy{sigma} function to check if they are both zero or not. Here is their symbolic expression:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+i1=T.trace()
+i2=sp.simplify(((T*T).trace()-i1*i1))/2
+\end{lstlisting}
+As already mentioned, all SymPy symbolic expression have to be transformed in strings to be used in the final \mycodepy{sigma} function:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+eig_expr = list(map(str, eigv))
+sig_expr = list(map(str, sig))
+i1_expr = str(i1)
+i2_expr = str(i2)
+\end{lstlisting} 
+The final \mycodepy{sigma} function is then the following:
+\begin{lstlisting}[numbers=left,basicstyle=\footnotesize,language=python]
+def sigma(x): 
+	T=eps(x);
+	eps_i1=eval(i1_expr)
+	return  conditional(gt(d,0.0),sig_dam(T,eps_i1),sig_sym_dam(T,eps_i1))
+\end{lstlisting} 
+On line 2 \mycodepy{T} UFL variable is computed as the result of applying \mycodepy{eps} function to argument \mycodepy{x}. Note here that the name of the tensor is chosen so that it correspond to the variable in the string expression that follows. Than in line 3  the python eval function replace all variable in string expression by there UFL variable to form new UFL expresion coresponding to $i_1$ invariant. At this stage a test is put in place to avoid any complex computation if the damage \mycodepy{d} is null. This test is provided in UFL language by \mycodepy{conditional} definition which correspond to the formal expression "if test(first argument) is true return second argument otherwise return third argument". This test may have been built into the SymPy symbolic expression \mycodepy{sig}, but translating it with \mycodepy{eval} to \mycodepy{conditional} wouldn't have been easy, if possible. The nature of the returned arguments of \mycodepy{conditional}  need to be the same, thus use of intermediate python function that return both a rank-2 tensor simplify the script.
+When the damage is null the function \mycodepy{sig_sym_dam} corresponding to derivation of potential $\psi$' \eqref{freeenergysym} is called. Its implementation is the following:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def sig_sym_dam(strain,trace): 
+	return (1.-d)*(2.0*mu*strain + lmbda*trace*Identity(2))	
+\end{lstlisting}
+
+When the damage is not null the following function \mycodepy{sig_dam} is called
+\begin{lstlisting}[numbers=left,basicstyle=\footnotesize,language=python]
+def sig_dam(T,eps_i1):
+	eps_i2=eval(i2_expr)
+	return  conditional(eq(eps_i1,0.0),conditional(eq(eps_i2,0.0),sig_sym_dam(T,eps_i1),sigma_strain_not_nul(T,eps_i1)),sigma_strain_not_nul(T,eps_i1))
+\end{lstlisting} 
+Its only purpose is to compute $i_2$ (line2) and test if both invariant are null or not. If they are both null it calls the function \mycodepy{sig_sym_dam} for performance purpose  and to avoid singularity when computing derivative of \mycodepy{J} even if null strain tensor (one case where invariants are both null ) imply null stress tensor.
+
+When one invariant at least is not null the function \mycodepy{sigma_strain_not_nul} is called:
+\begin{lstlisting}[numbers=left,basicstyle=\footnotesize,language=python]
+def sigma_strain_not_nul(T,tre):
+	eig1,eig2=map(eval, eig_expr)
+	alpha1 = conditional(lt(eig1,0.0),0.0,1.0)
+	alpha2 = conditional(lt(eig2,0.0),0.0,1.0)
+	alpha = conditional(lt(tre,0.0),0.0,1.0)
+	s00,s01,s10,s11=map(eval, sig_expr)
+	v= ([s00,s01],[s10,s11])
+	return ufl.tensors.as_tensor(v)
+\end{lstlisting} 
+Again string expression are transformed in UFL expression in line 2. Eigenvalues are transformed into \mycodepy{eig1} and \mycodepy{eig2} UFL variable to be able to do test in UFL language in following lines. In line 3, 4 and 5 test on sign of eigenvalues give a way to set $\alpha_i$ and $\alpha$. 
+Note again that the choice of the name of the UFL variable in these lines have to correspond to the one used in the declaration of the SymPy symbolic variable.
+In line 6,7 and 8, using again \mycodepy{eval}, the function create the stress tensor as an UFL tensor, based on all UFL variables created so far.
+
+
+\subsubsection{Symbolic manually symetrized \label{symbsym}} 
+This version uses the same tools as \ref{symb} solution except that symmetry of strain tensor (and thus stress tensor) is forced in the implementation. Desfacto the SymPy 2x2 matrix construction was defined as symmetric but during simplification the fact that T(1,0)=T(0,1)  was not used. To force this aspect this matrix is created by hand using 3 new symbolic variables:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+l,m,dam,psi,al,al1,al2,e11,e22,e12=sp.symbols('lmbda mu d psi alpha alpha1 alpha2 eps11 eps22 eps12')
+T = sp.Matrix([[e11,e12],[e12,e22]], symmetric=True, real=True)
+\end{lstlisting} 
+The \mycodepy{eigv} and \mycodepy{psi} remain the same but \mycodepy{sig} as to be corrected because we introduce an eps12$^2$ in the expression that provides a spurious 2 in the derivation that is corrected as follow storing only 3 terms out of the 4 for symbolic stress tensor:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]	 
+siga=sp.simplify(sp.diff(psi,T))
+sig=[siga[0,x] for x in [0]]
+sig.append(siga[0,1]/2.)
+sig.append(siga[1,1])
+\end{lstlisting}  
+Invariants and string expression construction are the same and the final \mycodepy{sigma} function becomes:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def sigma(x): 
+	T=eps(x);
+	eps11=T[0,0]
+	eps12=T[0,1]
+	eps22=T[1,1]
+	eps_i1=eval(i1_expr)
+	return  conditional(gt(d,0.0),sig_dam(T,eps11,eps22,eps12,eps_i1),sig_sym_dam(T,eps_i1))
+\end{lstlisting} 
+with the same implementation for \mycodepy{sig_sym_dam} function as in \ref{symb} and the following slightly modified implementation  compare to \ref{symb} for the \mycodepy{sig_dam} function and \mycodepy{sigma_strain_not_nul}:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def sig_dam(T,eps11,eps22,eps12,eps_i1):
+	eps_i2=eval(i2_expr)
+	return  conditional(eq(eps_i1,0.0),conditional(eq(eps_i2,0.0),sig_sym_dam(T,eps_i1),sigma_strain_not_nul(eps11,eps22,eps12,eps_i1)),sigma_strain_not_nul(eps11,eps22,eps12,eps_i1))
+def sigma_strain_not_nul(eps11,eps22,eps12,eps_i1):
+	eig1,eig2=map(eval, eig_expr)
+	alpha1 = conditional(lt(eig1,0.0),0.0,1.0)
+	alpha2 = conditional(lt(eig2,0.0),0.0,1.0)
+	alpha = conditional(lt(eps_i1,0.0),0.0,1.0)
+	s00,s01,s11=map(eval, sig_expr)
+	v= ([s00,s01],[s01,s11])
+	return ufl.tensors.as_tensor(v)
+\end{lstlisting} 
+\subsubsection{UFL potential derivation \label{ufl}}
+Compare to previous version in \ref{symb} and \ref{symbsym} this version is not using SymPy. Instead, the two hard aspect of the implementation of \mycodepy{sigma} function,  
+eigenvalues computation and potential \eqref{freeenergy} derivation, are treated using only UFL capabilities:
+\begin{itemize}
+	\item The eigenvalues are coded using the following mathematical solution for a 2x2 matrix  $A=\left( \begin{array}{cc}
+		a&b \\ c&d
+	\end{array}\right)$ with the trace being $T=a+d$ and the determinant $D=ad-bc$ : $$\Lambda_i=\frac{T+(-1)^{(i-1)}\times \sqrt{T^2-4\times D}}{2}$$In the present case $A$ is the strain tensor matrix $\tens{\epsilon}$, thus using  $i_1$ and  $i_2$ invariant from \eqref{invariants}
+ we can rewrite eigenvalues as follows: \begin{equation}\Lambda_i=\frac{i_1+(-1)^{(i-1)}\times \sqrt{i_1^2+4 i_2}}{2}\label{eignvalues}\end{equation}
+
+	\item The potential \eqref{freeenergy} derivation is done using UFL \mycodepy{diff} that take the derivative of a formal function given as argument with respect to a formal variable given also as argument.
+\end{itemize}
+
+As the potential \eqref{freeenergy} use $\Lambda_i$ and as \eqref{eignvalues} use a square root function which can't be derived on 0, the python function to encode $\psi$ is adding a test to check if all invariants are null or not:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def psi(S):
+	i1=tr(S)
+	i2=0.5*(tr(S*S)-i1*i1)
+	return conditional(eq(i1,0.0),conditional(eq(i2,0.0),psi_sym_dam(S,i1),psi_non_null_strain(S,i1,i2)),psi_non_null_strain(S,i1,i2))
+\end{lstlisting} 
+When both invariant are null, to avoid derivation problem mentioned above when computing $\tens{\sigma}$ and to optimize computation the following \mycodepy{psi_sym_dam}  function is called:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def psi_sym_dam(T,i1):
+ return (1 - d) * (i1 * i1 * lmbda / 2. + mu * (T[0,0] * T[0,0] + T[1,1] * T[1,1] + T[1,0] * T[1,0] + T[0,1] * T[0,1]))
+
+\end{lstlisting} 
+which correspond to \eqref{freeenergysym}. Otherwise the following \mycodepy{psi_non_null_strain} function coresponding to \eqref{freeenergy} is called:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def psi_non_null_strain(T,i1,i2):
+	delta=i1*i1+4*i2
+	r=sqrt(delta)
+	eig1 = (i1 + r) / 2.
+	eig2 = (i1 - r) / 2.
+	alpha1 = conditional(lt(eig1,0.0),0.0,1.0)
+	alpha2 = conditional(lt(eig2,0.0),0.0,1.0)
+	alpha = conditional(lt(eig1+eig2,0.0),0.0,1.0)
+	return i1*i1*(1. - alpha * d) * lmbda / 2. + mu * ((1 - alpha1 * d) * eig1 * eig1 + (1. - alpha2 * d) * eig2 * eig2)
+\end{lstlisting}
+The implementation of the \mycodepy{sigma} function is then:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+def sig_sym_dam(T): 
+	T=ufl.variable(T)
+	i1=tr(T)
+	v= ufl.diff(psi_sym_dam(T,i1),T)
+	return ufl.tensors.as_tensor(v)
+
+def sig_dam(T): 
+	T=ufl.variable(T)
+	v= ufl.diff(psi(T),T)
+	return ufl.tensors.as_tensor(v)
+
+def sigma(x): 
+	T=eps(x);
+	return  conditional(gt(d,0.0),sig_dam(T),sig_sym_dam(T))
+\end{lstlisting} 	
+If damage is not null derivation of \eqref{freeenergy} is done via \mycodepy{psi} function. Otherwise, it is derivation of \eqref{freeenergysym} which is computed via \mycodepy{psy_sym_dam} function.
+\subsubsection{Hand made encoding \label{manual}}
+This last version is close of standard C++ MFEM implementation in the sens that eigenvalues computation and the potential \eqref{freeenergy} derivation are both coming from mathematical development.
+Equation \eqref{eignvalues} will be used for the eigenvalue.
+To do the derivation of $\psi$ we are going to use directly eignvalues derivation and pass result in  the physical bases by using eigenvectors associate to \eqref{eignvalues}:  
+\begin{equation}
+	\frac{\partial\psi}{\partial \Lambda_i}=\lambda(1-\alpha d)i_1+2\mu(1-\alpha_i d)\Lambda_i
+	\label{partialeign}
+\end{equation}
+where $i_1=\Lambda_1+\Lambda_2$ or from \eqref{invariants} $i_1=tr(\tens{\epsilon})$.
+The normalized eignvectors associated to \eqref{eignvalues} are given by the following matrix:
+\begin{equation}
+	\phi=\left( \begin{array}{cc}
+		\frac{\Lambda_1 -\tens{\epsilon}_{22}}{n_1}&\frac{\Lambda_2-\tens{\epsilon}_{22}}{n_2}\\
+		\frac{\tens{\epsilon}_{12}}{n_1}&\frac{\tens{\epsilon}_{12}}{n_2}
+	\end{array}\right)\label{phin}
+\end{equation}
+with $n_1=\sqrt{(\Lambda_1 -\tens{\epsilon}_{22})^2+\tens{\epsilon}_{12}^2}$ and $n_2=\sqrt{(\Lambda_2 -\tens{\epsilon}_{22})^2+\tens{\epsilon}_{12}^2}$. If $\tens{\epsilon}_{12}=0$ then $\phi$ is chosen to be  the identity matrix.
+The srtess tensor $\tens{\sigma}$ is then, using matrix operator:
+\begin{equation}
+	\tens{\sigma}=\phi^t\cdot\left( \begin{array}{cc}
+		\frac{\partial\psi}{\partial \Lambda_1}&0\\
+		0&\frac{\partial\psi}{\partial \Lambda_2}
+	\end{array}\right)\cdot\phi
+\label{sigmanu}
+\end{equation}
+Note that if $i_1=i_2=0$ then only the symmetric traction/compression potential must be used in the computation as eignvalues are both null. And in the same spirit if damage is null there is no need to pass by eigenvalues to obtain $\alpha_i$ and $\alpha$ as they are multiplied by zero anyway, so symmetric traction/compression potential is enough. The implementation take into account those test in the same way as in \ref{symb}, \ref{symbsym}, and \ref{ufl} by dispatching the different cases in some python functions. Encoding of those function follows directly \eqref{invariants}, \eqref{eignvalues}, \eqref{partialeign},  \eqref{phin}, \eqref{sigmanu} and derivation of \eqref{freeenergysym}.
+\subsubsection{Full Python (based on section \ref{symbsym} approach)} 
+Compared to the general approach presented in section \ref{gen_over} and the codes presented in sections \ref{symb} and \ref{symbsym}, the differences are as follows:
+\begin{itemize}
+	\item Everything is coded in the python script.
+	\item \mycodepy{domain} is now the full mesh read from a file and not a UFL mesh.
+	\item Volumic load, damage and Young's modulus   are now directly \mycodepy{dolfinx.fem.Function} and they are computed  in the python script.
+	\item Poisson ratio remain a constant but it is now a \mycodepy{dolfinx.fem.Constant} fixed in the script. 
+\end{itemize}
+ The Lamè coefficients $\lambda$ and $\mu$ have the same python expression as in listing \ref{lamecoefpy} of section \ref{gen_over} and represent a UFL expression despite the new nature of the Poisson ratio and Young's modulus given above. In fact, in Python, \mycodepy{dolfinx.fem.Function} and \mycodepy{dolfinx.fem.Constant} are intrinsically understood as UFL expressions. And it is the same for all other functions and expressions (\mycodepy{eps}, \mycodepy{sigma}, \mycodepy{F}, \mycodepy{J}, ...) that are the same as in the \ref{symb} / \ref{symbsym} section and use SymPy for symbolic differentiation.
+\subsection{MFEM variational expression\label{mfem_variational}}
+\subsubsection{Standard way\label{mfem_std}}
+Setting up the variational expression in MFEM starts with looking at the large set of linear or bi-linear formulations available.
+More precisely, it is the set of derived classes of \mycode{mfem::LinearFormIntegrator} or \linebreak \mycode{mfem::NonlinearFormIntegrator} that provide object that can be used in generic formulation class like \mycode{mfem::ParNonlinearForm},\mycode{mfem::ParLinearForm} or \mycode{mfem::ParBilinearForm}. Again, as with \f{}, the test case of section \ref{expl1} is used to illustrate how to use MFEM when no class satisfies the problem to be coded (here the asymmetric tension/compression elasto-damaged constitutive law). The user is then responsible for creating his own derived class from the base class \mycode{mfem::NonlinearFormIntegrator} to encode \eqref{formF} and the Jacobian operator derived from it. 
+This new class, hereafter called \mycode{damIntegrator},  implement the following virtual methods:
+\begin{itemize}
+	\item \mycode{AssembleElementVector} which, for an element with a given displacement filed value, computes the elementary vector corresponding to \eqref{formF}.  For a fair comparison with \f{}, both integrals of \eqref{formF} are calculated.
+	 However, as the load is constant during the non-linear loop, in MFEM the second integral can be calculated and assembled only once in a vector given as an argument to the Newton solver (see below).
+	\item \mycode{AssembleElementGrad} which, for an element with a given displacement filed value, computes the elementary matrix corresponding to Jacobian of \eqref{formF}.
+\end{itemize}	
+
+The class \mycode{damIntegrator} has the following definition:
+\begin{lstlisting}[basicstyle=\scriptsize,label=damIntegrator]
+class damIntegrator : public NonlinearFormIntegrator
+{
+	public:
+	    damIntegrator(Coefficient &l, Coefficient &m, QuadratureFunctionCoefficient &d, const IntegrationPoint &ip_, const IntegrationRule *ir, VectorQuadratureFunctionCoefficient &load_)
+	 	void AssembleElementVector(const FiniteElement &el, ElementTransformation &Tr, const Vector &elfun, Vector &elvect);
+		void AssembleElementGrad(const FiniteElement &el, ElementTransformation &Tr, const Vector &elfun, DenseMatrix &elmat);
+	private:
+		Coefficient &lambda, &mu;
+		QuadratureFunctionCoefficient &dam;
+		const IntegrationPoint &ip;
+		VectorQuadratureFunctionCoefficient &load;
+		const int nd;
+		const int dim;
+		real_t limit, mlimit;
+		DenseMatrix dshape, gdshape, strain, sig, hook, block, disp, res;
+		DenseMatrix B, C, mgdshapex, mgdshapey;
+		DenseMatrix evec, potentiel_sderivative, dedeps, M;
+		Vector eval, eigns;
+		Vector vl, shape, f;
+	};
+\end{lstlisting}
+The implementation of the constructor takes as arguments the Lamè coefficients $\lambda$ and $\mu$, the damage \mycode{d}, the unique integration point (and weight) to compute the first integral of  \eqref{formF}, the integration rule (set of integration  points and weights) to compute the second integral of  \eqref{formF} and the load ($f$).
+It sets all small vectors and dense matrices used during the calculation.
+\begin{lstlisting}[basicstyle=\scriptsize,label=damIntegratorconstr]
+damIntegrator(Coefficient &l, Coefficient &m, QuadratureFunctionCoefficient &d, const IntegrationPoint &ip_, const IntegrationRule *ir, VectorQuadratureFunctionCoefficient &load_)
+	: NonlinearFormIntegrator(ir),
+	lambda(l), mu(m), dam(d), ip(ip_), load(load_),
+	nd(3), dim(2),limit(1.e-12), mlimit(-1.e-12),
+	dshape(nd, dim), strain(dim), sig(dim), hook(3),
+	block(nd), B(nd * dim, 3), C(nd * dim, 3),
+	evec(dim), potentiel_sderivative(3), dedeps(3),
+	M(3), eval(dim),eigns(dim),
+	vl(dim * nd), shape(nd), f(dim)
+	{
+		B=0.;
+		gdshape.UseExternalData(vl.GetData(), nd, dim);
+	}
+\end{lstlisting}
+Note that \mycode{mfem::DenseMatrix} can use its internal memory or a user-defined array(\mycode{UseExternalData}). This way a monodimensional array can be interpreted by \mycode{DenseMatrix} as a bidimensional array, just like \mycode{mdspan}, which is widely used in \f{}.
+
+The implementation of \mycode{AssembleElementVector} starts by reshaping the result container, placing warpers (i.e. \mycode{mfem::DenseMatrix} for result and displacement vector)  and then computes the result vector in two steps (first and second integral of \eqref{formF}):
+\begin{lstlisting}[basicstyle=\scriptsize,label=assembleElementvector]
+void AssembleElementVector(const FiniteElement &el, ElementTransformation &Tr, const Vector &elfun, Vector &elvect)
+{
+	// reshape vector result
+	elvect.SetSize(nd * dim);
+	
+	// set vectors into dense matrix used as warper
+	disp.UseExternalData(elfun.GetData(), nd, dim);
+	res.UseExternalData(elvect.GetData(), nd, dim);
+	
+	// compute the first integral of é\eqref{formF}é: sig:grad
+	elvect = 0.;
+	Tr.SetIntPoint(&ip);
+	real_t wt = Tr.Weight();
+	real_t w = ip.weight * wt;
+	asym_stress(el,Tr,ip,w,disp,dam,lambda,mu,dshape,gdshape,strain,limit,mlimit,eval,eigns,evec,sig);
+	AddMult(gdshape, sig, res);
+	
+	// compute the second integral of é\eqref{formF}é: load contribution
+	// integration loop
+	const int nip = IntRule->GetNPoints();
+	for (int i = 0; i < nip; i++)
+	{
+		const IntegrationPoint &ipl = IntRule->IntPoint(i);
+		Tr.SetIntPoint(&ipl);
+		real_t wl = ipl.weight * wt;
+		// get volumic load
+		load.Eval(f, Tr, ipl);
+		// get form function in physical space
+		el.CalcPhysShape(Tr, shape);
+		// add -f:v
+		AddMult_a_VWt(-wl, shape, f, res);
+	}
+}// end of AssembleElementVector method
+\end{lstlisting}
+In this implementation it is assumed that the elements use a polynomial interpolation basis of order 1. 
+Thus the Jacobian of the transformation of these elements is a constant over one element. The \mycode{Weight} method is then called only once in line 13 and reused in lines 14 and 25 for all integration points. This reduces the computational overhead, but makes the encoding less general.
+In the same spirit, the order of integration is hard coded for the two integrals of \eqref{formF}.
+It provides a way to precompute the fixed field $d$ and $\vm{f}$ just once before entering the non-linear loop, at the chosen integration points, and store this information in arrays controlled by the \mycode{QuadratureFunctionCoefficient} and \mycode{VectorQuadratureFunctionCoefficient} classes.
+A call to the \mycode{Eval} method of these classes simply finds the information in an array according to the integration point index.
+With a field instance (\mycode{ParGridFunction}), a call to the \mycode{GetValue} method will compute  the same information at the integration point, which is more computationally expensive.
+So the first integral uses an order 1 integration (which uses the given \mycode{ip} integration point) and the second integral uses an order 2 integration (which leads to a loop on the given \mycode{ir}/\mycode{IntRule} integration rule).
+
+
+
+The first integral is mainly computed by calling an extra \mycode{asym_stress} function that computes $\tens{\sigma}$ (\mycode{sig}) for the \mycode{ip }integration point.
+It uses \eqref{invariants}, \eqref{eignvalues}, \eqref{partialeign}, \eqref{phin}, \eqref{sigmanu} and the derivation of \eqref{freeenergysym} with the same test for non-zero damage and non-zero invariants as with \f{}:
+\begin{lstlisting}[basicstyle=\scriptsize,label=asymstress]
+void asym_stress(const FiniteElement &el, ElementTransformation &Tr, const IntegrationPoint &ip, const real_t &w,const DenseMatrix &disp,QuadratureFunctionCoefficient &dam, Coefficient &lambda, Coefficient &mu, DenseMatrix &dshape,DenseMatrix &gdshape, DenseMatrix &strain, real_t &limit, real_t &mlimit, Vector &eval, Vector &eigns,DenseMatrix &evec, DenseMatrix &sig)
+{	
+	// get damage, lambda and mu
+	real_t d = dam.Eval(Tr, ip);
+	real_t l = lambda.Eval(Tr, ip);
+	real_t m = mu.Eval(Tr, ip);
+	
+	// get gradiant of form function
+	el.CalcDShape(ip, dshape);
+	// pass it in physical space
+	Mult(dshape, Tr.InverseJacobian(), gdshape);
+	// computes gradiant of displacement
+	MultAtB(disp, gdshape, strain);
+	// set as strain
+	strain.Symmetrize();
+	
+	// if non null damage
+	if (d > 0.)
+	{
+		// computing the invariants
+		real_t I1 = strain(0, 0) + strain(1, 1);
+		real_t I2 = strain(0, 1) * strain(0, 1) - strain(0, 0) * strain(1, 1);
+		
+		// if non null tensor
+		if (I1 > limit || I2 > limit || I1 < mlimit || I2 < mlimit)
+		{
+			// computing the eigen values
+			real_t delta = I1 * I1 + 4 * I2;
+			MFEM_ASSERT(delta > mlimit, "!!! Strain tensor rank deficient !!!")
+			real_t r = sqrt(max(0., delta));
+			eval[0] = (I1 + r) / 2.;
+			eval[1] = (I1 - r) / 2.;
+			
+			// modifying values of alpha's based on the signs of eigenvalues
+			real_t alpha, alpha1, alpha2;
+			if (eval[0] >= 0) alpha1 = 1.; else alpha1 = 0.;
+			if (eval[1] >= 0) alpha2 = 1.; else alpha2 = 0.;
+			if ((eval[0] + eval[1]) >= 0) alpha = 1.; else alpha = 0.;
+			
+			// genral case : not pure traction and full damage (i.e. alpha_i=1=damage)
+			if (!((d == 1.) && (alpha == 1) && (alpha1 == 1) && (alpha2 == 1)))
+			{
+				// computing the eigenvectors
+				if (fabs(strain(1, 0)) > limit)
+				{
+					evec(0, 0) = eval[0] - strain(1, 1);
+					evec(0, 1) = eval[1] - strain(1, 1);
+					evec(1, 0) = evec(1, 1) = strain(1, 0);
+					real_t norms[2];
+					evec.Norm2(norms);
+					evec(0, 0) /= norms[0];
+					evec(1, 0) /= norms[0];
+					evec(0, 1) /= norms[1];
+					evec(1, 1) /= norms[1];
+				}
+				else
+				{
+					evec(0, 0) = evec(1, 1) = 1.;
+					evec(1, 0) = evec(0, 1) = 0.;
+				}
+				real_t temp = 2. * m * w; // E/(1+nu) multiply here by weight
+				real_t gamma = 0.5 * l / m;  // nu/(1-2*nu)
+				
+				real_t c = 1 - alpha * d;
+				real_t c1 = 1 - alpha1 * d;
+				real_t c2 = 1 - alpha2 * d;
+				real_t D0 = temp * (c1 + gamma * c);
+				real_t D1 = temp * gamma * c;
+				real_t D2 = temp * (c2 + gamma * c);
+				eigns[0] = D0 * eval[0] + D1 * eval[1];
+				eigns[1] = D1 * eval[0] + D2 * eval[1];
+				MultADAt(evec, eigns, sig);
+			}
+			// pure traction and full damage: alpha_i=1=damage
+			else
+			{
+				sig = 0.;  // stress=0 
+			}
+		}
+		// null strain tensor
+		else
+		{
+			sig = 0.;  // stress=0
+		}
+	}
+	// if null damage
+	else
+	{
+		// simple linear stress: integration of E:strain
+		// multiply here by weight
+		real_t m2plw = w * (2 * m + l);
+		real_t lw = l * w;
+		sig(0, 0) = m2plw * strain(0, 0) + lw * strain(1, 1);
+		sig(1, 1) = m2plw * strain(1, 1) + lw * strain(0, 0);
+		sig(1, 0) = sig(0, 1) = w * m * (strain(0, 1) + strain(1, 0));
+	}	
+}
+\end{lstlisting}
+
+The \mycode{AssembleElementGrad} method uses the same ingredients, but implements the mathematical expression of the derivative of \eqref{formF}. It uses about 200 lines of code.
+
+With this class it is now possible to create the formulation object as follows:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=mfem::nlform]
+ParNonlinearForm F(&space);
+auto pdi = new damIntegrator(lambda_func, mu_func, qfcd, ip1, ir2, qfcl);
+F.AddDomainIntegrator(pdi);
+\end{lstlisting}
+with :
+\begin{itemize}
+	\item \mycode{lambda_func} and \mycode{mu_func} objects of type \mycode{mfem::PWConstCoefficient} corresponding to the Lamè coefficients $\lambda$ and $\mu$ (section \ref{MatProp})
+	\item \mycode{ip1} the integration point related to order 1 integration
+	\item \mycode{ir2} the integration rule related to order 2 integration
+	\item \mycode{qfcd} the damage field constructed in section \ref{mat_dam} and pres computed at the integration point \mycode{ip1} in a \mycode{QuadratureFunctionCoefficient} object
+	\item  \mycode{qfcl} the load ($f$) (see section \ref{bc_neuman} listing \ref{qfcl})
+\end{itemize}
+
+Alternatively, as mentioned above, the load in \eqref{formF} is constant during the non-linear loop, so its integration can be calculated only once using:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=loadform]
+Vector load_rhs(space.GetTrueVSize());
+ParLinearForm b(&space);
+b.AddDomainIntegrator(new VectorDomainLFIntegrator(qfcl));
+b.Assemble();
+// store in load_rhs
+b.ParallelAssemble(load_rhs);
+// reset to zero dirichlet so that they don't mess up the computation
+for (auto idx : ess_tdof_list) load_rhs[idx] = 0.;
+\end{lstlisting}
+where \mycode{qfcl} is the load ($f$) (see section \ref{bc_neuman} listing \ref{qfcl}) and \mycode{ess_tdof_list} is the list of Dirichlet boundary condition DOFs (see section \ref{bc_dirichlet} listing \ref{listDiriDoffs} ).
+The  \mycode{VectorDomainLFIntegrator} class corresponds exactly to the second integral of \eqref{formF} and can therefore be used directly with a linear form (here \mycode{b}) to assemble the corresponding vector \mycode{load_rhs}, contribution to the residual formulation. 
+This vector is then passed to the Newton solver. 
+However, since Dirichlet dofs rows of the residual vector are nullified during its construction in the non-linear loop before \mycode{load_rhs} is subtracted from it, the user must also nullify Dirichlet dofs rows of \mycode{load_rhs}. 
+In this way, the final residual vector corresponding to \eqref{formF} got zero terms at Dirichlet dofs, as expected.
+Using this vector means that the \mycode{AssembleElementVector} method of the \mycode{damIntegrator} class now only calculates the first integral of \eqref{formF} and lines 18 to 32 of the listing \ref{assembleElementvector}  must be removed in this case.
+
+\subsubsection{Automatic Differentiation\label{AD}}
+The miniapps/autodiff subdirectory of MFEM contains an example that illustrates the automatic differentiation (AD) of arbitrary functions implemented in C++. To get more insite on the AD technique, look at the example on the MFEM site or on the Internet. The AD technique appears to be still in development, as the miniapps/autodiff relies on files not provided by the MFEM 4.7.0 version.  By attempting to evaluate the gain in implementation work provided by this technique compared to standard MFEM usage, this study will be relatively fair compared to \f{}, which provides user-friendly implementation of formulations.
+
+In order to use AD, the following headers are required:
+admfem.hpp, taddensemat.hpp and tadvector.hpp. For AD, the principle is similar to the strategy used in section \ref{ufl} with FEniCSx full UFL differentiation. The idea is to start from the potential \eqref{freeenergy} by declaring the following class:
+
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+/// Functor used in automatic differentiation that compute the asymmetric traction/compression damaged elasticity potential.
+/// State vector strain store strain tensor in the following order:
+///  0     1      2      3
+/// eps11, eps21, eps12, eps22
+/// and parameters provided in vector vparam are Lame and damage
+template <typename TDataType, typename TParamVector, typename TStateVector, int state_size, int param_size>
+class Potential
+{
+	double limit=1.e-12, mlimit=-1.e-12;
+	public:
+	TDataType operator()(TParamVector &vparam, TStateVector &strain)
+	{
+		real_t d = vparam[2];  // Damage
+		
+		// computing the invariants
+		TDataType I1 = strain[0] + strain[3];
+		TDataType I2 = strain[1] * strain[2] - strain[0] * strain[3];
+		
+		// non null tensor
+		if (I1 > limit || I2 > limit || I1 < mlimit || I2 < mlimit)
+		{
+			// computing the eigen values
+			TDataType delta = I1 * I1 + 4. * I2;
+			MFEM_ASSERT(delta > mlimit, "Strain tensor is rank deficient !!!")
+			TDataType r = sqrt(delta);
+			TDataType ev1 = (I1 + r) / 2.;
+			TDataType ev2 = (I1 - r) / 2.;
+			
+			// alpha's
+			real_t alpha, alpha1, alpha2;
+			if (ev1 >= 0) alpha1 = 1.; else alpha1 = 0.;
+			if (ev2 >= 0) alpha2 = 1.; else alpha2 = 0.;
+			if ((ev1 + ev2) >= 0) alpha = 1.; else alpha = 0.;
+			
+			// return the asymetric potential
+			return I1 * I1 * (1. - alpha * d) * vparam[0] / 2. +
+			vparam[1] * ((1 - alpha1 * d) * ev1 * ev1 + (1. - alpha2 * d) * ev2 * ev2);
+		}
+		// null tensor
+		else
+		{
+			// switch to simple linear potential to avoid singular second derivative (due to sqrt at zero). 
+			return (1 - d) * (I1 * I1 * vparam[0] / 2. + vparam[1] * (strain[0] * strain[0] + strain[3] * strain[3] +
+			strain[1] * strain[1] + strain[2] * strain[2]));
+		}
+	}
+};
+\end{lstlisting}
+Unlike the usual C++ implementation, this function object manipulates variables with their type (here provided has  a  \mycode{TDataType} generic type), which contains their value and derivative. This makes it possible to calculate expressions and their derivatives by overloading mathematics operation for this type.
+Thus, potential first and second AD derivatives are used directly in the \mycode{AssembleElementVector} and \mycode{AssembleElementMatrix} methods of the slightly modified \mycode{damIntegrator} class.
+This class definition  only change  for the private member with: 
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+    DenseMatrix hess;
+    Vector vparam;
+    QFunctionAutoDiff<Potential, 4, 3> ad_potentiel;
+\end{lstlisting}
+replacing following lines in listing \ref{damIntegrator}:
+\begin{lstlisting}[firstnumber=17,basicstyle=\scriptsize]
+   DenseMatrix evec, potentiel_sderivative, dedeps, M;
+   Vector eval, eigns;
+\end{lstlisting}
+and by consequence in the constructor following lines :
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize]
+    hess(4, 4),
+    vparam(3),
+\end{lstlisting} replace lines in listing \ref{damIntegratorconstr}:
+\begin{lstlisting}[firstnumber=7,basicstyle=\scriptsize]
+	evec(dim), potentiel_sderivative(3), dedeps(3),
+    M(3), eval(dim),eigns(dim),
+\end{lstlisting}
+The data member \mycode{ad_potentiel} is an instance of the template class \mycode{mfem::QFunctionAutoDiff}, which provides an evaluation of the first derivatives and the Hessian of a templated scalar function provided as a functor. In the present it is the object function \mycode{Potential} that is in use.
+
+\bigskip 
+The \mycode{AssembleElementVector} is the same as the standard version presented in listing \ref{assembleElementvector} except that now it calls the following new \mycode{asym_stress} function:
+\begin{lstlisting}[basicstyle=\scriptsize,label=asymstressAD]
+void asym_stress(const FiniteElement &el, ElementTransformation &Tr, const IntegrationPoint &ip, const real_t &w, const DenseMatrix &disp, QuadratureFunctionCoefficient &dam, Coefficient &lambda, Coefficient &mu, DenseMatrix &dshape, DenseMatrix &gdshape, DenseMatrix &strain, Vector &vparam, mfem::QFunctionAutoDiff<Potential, 4, 3> &ad_potentiel, DenseMatrix &sig)
+{
+	
+	// get damage, lambda and mu
+	real_t d = dam.Eval(Tr, ip);
+	real_t l = lambda.Eval(Tr, ip);
+	real_t m = mu.Eval(Tr, ip);
+	
+	// get gradiant of form function
+	el.CalcDShape(ip, dshape);
+	// pass it in physical space
+	Mult(dshape, Tr.InverseJacobian(), gdshape);
+	// computes gradiant of displacement
+	MultAtB(disp, gdshape, strain);
+	// set as strain
+	strain.Symmetrize();
+	
+	// if non null damage
+	if (d > 0.)
+	{
+		vparam[0] = l * w;
+		vparam[1] = m * w;
+		vparam[2] = d;
+		Vector vstrain(strain.GetData(),4);
+		Vector vsig(sig.GetData(),4);
+		ad_potentiel.Grad(vparam, vstrain, vsig);
+	}
+	// if null damage
+	else
+	{
+		// simple linear stress: integration of E:strain
+		// multiply here by weight
+		real_t m2plw = w * (2 * m + l);
+		real_t lw = l * w;
+		sig(0, 0) = m2plw * strain(0, 0) + lw * strain(1, 1);
+		sig(1, 1) = m2plw * strain(1, 1) + lw * strain(0, 0);
+		sig(1, 0) = sig(0, 1) = w * m * (strain(0, 1) + strain(1, 0));
+	}
+}
+\end{lstlisting}
+Compared to the standard version, the use of AD greatly simplifies the code.
+Lines 20-84 of listing \ref{asymstress} are in listing \ref{asymstressAD}, replaced by lines 21-26.
+By simply calling the \mycode{Grad} method of the \mycode{mfem::QFunctionAutoDiff} class, all the manual calculation of \eqref{partialeign}, \eqref{phin}, \eqref{sigmanu} and derivation of \eqref{freeenergysym} is done by differentiating the potential \eqref{freeenergy} expressed in the \mycode{Potential} class.
+
+Similarly, the \mycode{AssembleElementGrad} method is greatly simplified by using AD.
+In terms of line count, the new version is  only 40\% the size of the standard version.
+In algorithmic terms, using the \mycode{Hessian} method of the \mycode{mfem::QFunctionAutoDiff} class removes all the complex and error-prone mathematical implementation associated with the second derivative of \ref{freeenergy}.
+The code is shown below:
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=assembleElementGrad]
+void AssembleElementGrad(const FiniteElement &el, ElementTransformation &Tr, const Vector &elfun, DenseMatrix &elmat)
+{
+	// reset result matrix
+	elmat.SetSize(nd*dim);
+	elmat = 0.0;
+	// local matrices and vector setting
+	Vector gdshapex(vl.GetData(), nd);
+	Vector gdshapey(vl.GetData()+nd, nd);
+	disp.UseExternalData(elfun.GetData(), nd, dim);
+	mgdshapex.UseExternalData(gdshapex.GetData(), nd, 1);
+	mgdshapey.UseExternalData(gdshapey.GetData(), nd, 1);
+	Vector vstrain(strain.GetData(),dim*dim);		
+	// get weight
+	Tr.SetIntPoint(&ip);
+	real_t w = ip.weight * Tr.Weight();
+	// get lambda, mu
+	real_t l = lambda.Eval(Tr, ip);
+	real_t m= mu.Eval(Tr,ip);
+	// get gradiant of form function
+	el.CalcDShape(ip, dshape);
+	// pass it in physical space
+	Mult(dshape, Tr.InverseJacobian(), gdshape);
+	// set B 
+	B.SetSubMatrix(0, 0, mgdshapex);
+	B.SetSubMatrix(nd, 1, mgdshapey);
+	B.SetSubMatrix(0, 2, mgdshapey);
+	B.SetSubMatrix(nd, 2, mgdshapex);
+	// get damage
+	real_t d = dam.GetValue(Tr);
+	// if non null damage
+	if (d>0.)
+	{
+		// to secure matrix non singular use limiter for damage
+		d = min(d, 1. - limit);
+		// computes strain
+		MultAtB(disp, gdshape, strain);
+		strain.Symmetrize();
+		// compute hessian
+		vparam[0] = l; vparam[1] = m; vparam[2] = d;
+		ad_potentiel.Hessian(vparam, vstrain, hess);
+		// reorder into hook
+		for (int i = 0; i < 3; ++i)
+		   for (int j = 0; j < 3; ++j)
+		        hook(i, j) = hess(i + 2 * (i % 2), j + 2 * (j % 2));
+		hook(2, 2) = 0.5 * (hook(2, 2) + hess(1, 2));
+	}
+	// if null damage
+	else
+	{
+		// simple linear hook
+		hook=0.;
+		hook(0, 0) = hook(1, 1) = 2 * m + l;
+		hook(1, 0) = hook(0, 1) = l;
+		hook(2, 2) = m;
+	}
+	// compute elementary matrix
+	Mult(B, hook, C);
+	AddMult_a_ABt(w, C, B, elmat);		
+}
+\end{lstlisting}
+
+\bigskip
+For the formulation object itself, the same code can be used as in the listing \ref{mfem::nlform}.
+The use of AD is fully transparent at this level in this example.
+\subsection{Assembly\label{assembly}}
+The task of assembling an elementary matrix or vector provided by the formulation described in the previous sections is launched either explicitly or implicitly in more global library functions.
+In all cases, the two libraries have a set of classes that provide the distributed vector and matrix concepts to create the algebraic system populated by these assembler routines. 
+\subsubsection{MFEM\label{assemblyMFEM}}
+For non-linear problems, assembly is done in \mycode{mfem::ParNonlinearForm::Mult}/\mycode{mfem::ParNonlinearForm:: GetGradient} methods that call the\\ \mycode{AssembleElementVector} / \mycode{AssembleElementGrad}  (e.g. listing \ref{assembleElementvector} or its AD version and \ref{assembleElementGrad} or its standard version) for all elements of a domain to get elementary vectors / matrices and assemble them into a residual vector / Jacobian matrix.
+These methods are called inside the non-linear loop of the \mycode{mfem::NewtonSolver::Mult} method (the function that solves the non-linear problem). 
+The user only needs to assign the non-linear form (\mycode{F} in the listing \ref{mfem::nlform} ) to the Newton solver instance and call the \mycode{mfem::NewtonSolver::Mult} method to get the linear system created and updated during the non-linear loop.
+
+For linear problems, the assembly is computed more explicitly  by calling the \mycode{mfem::ParLinearForm::Assemble} / \mycode{mfem::ParBilinearForm::Assemble} methods with a linear / bi-linear formulation object.
+The user only needs to assign an ad hoc integrator to the formulation object to obtain the elementary vectors / matrices during the assembly loop in these methods.
+
+As an alternative to the assembly in large vectors and matrices, MFEM offers among others the so-called "partial assembly" and the "matrix-free assembly" (especially interesting when using GPUs, see \cite{andrej2024highperformancefiniteelementsmfem}). Both were not tested in this study, but the documentation contains the following comments on them:
+\begin{itemize}
+	\item Compared to the "full assembly" strategy, the "partial assembly" strategy, which computes and stores data only at quadrature points, results in significantly faster computations  and less memory consumption.  
+	\item Compared to the "full assembly" strategy, the "matrix-free assembly", which computes all actions on the fly without significant storage, is also significantly faster, but currently slower than the "partial assembly" strategy due to the increased number of computations. However, in the case of operators that need to be reassembled frequently, this level of assembly could be faster than partial assembly by skipping all reassembly steps.
+\end{itemize}
+
+\bigskip
+The general assembly loops are summarised in the algorithm \ref{assemblyGM}.
+\begin{algorithm}[h]
+	\footnotesize	
+	\begin{algorithmic}
+\For{$i \in \mathfrak{E}$}
+\For{$id \in \mathfrak{F}_i$}
+\State $Ae_{i},be_{i}\gets Ae_{i},be_{i} + \text{AssembleElementXXX}_{id}(data_i)$
+\EndFor
+\State After possible treatment, assemble $Ae_{i},be_{i}$ into $A,b$
+\EndFor
+	\end{algorithmic}
+	\caption{MFEM general assembly loop structure ("full assembly" strategy) with $\mathfrak{F}_i$, $\mathfrak{E}$ respectively the set of integral ids (integrator) for the treated formulation corresponding to current element $i$ and the set of elements.  $\text{AssembleElementXXX}_{id}(\text{data}_i)$ computes, for an element $i$ (described by data$_i$), the elementary "matrix,vector" with a quadrature loop corresponding to integral $id$. "XXX" stands for "Vector", "Grad" or "Matrix". $Ae_i,be_i$ and $A,b$ are the elementary "matrix,vector" of element $i$ and the global "matrix,vector" respectively.\label{assemblyGM}}
+\end{algorithm}
+
+\subsubsection{FEniCSx}
+With the Python API, in non-linear, everything is encapsulated in a \mycodepy{dolfinx.nls.petsc.NonlinearProblem} object.
+At construction time, it takes \mycodepy{F} (listing \ref{Ffenicsxpy}) and \mycodepy{J} (listing \ref{Jfenicsxpy}) as arguments.
+The non-linear problem object is passed to the \mycodepy{dolfinx.nls.petsc.NewtonSolver} object, which is used by the user to solve the problem.		
+As in MFEM, the linear system is created and updated during the non-linear loop by the resolution method.
+
+
+
+In the linear case, as in the non-linear case, everything can be encapsulated in a single object of type \mycodepy{dolfinx.fem.petsc.LinearProblem}.
+It takes as argument at least the bi- and linear form describing the problem.
+The call to its \mycodepy{solve} method causes the system matrix and vector to be assembled on the fly before it is resolved. 
+Otherwise, the following illustrates the implementation of the assembly step of a \mycodepy{a} bi-linear form and a \mycodepy{L} linear form created from UFL expressions (by the instruction of the listing \ref{Formfenicsxpy}) under Dirichlet boundary conditions: 
+\begin{lstlisting}[basicstyle=\footnotesize,language=Python,label=asslinfen]
+A = dolfinx.fem.petsc.assemble_matrix(a, bcs=bdirichlet)
+A.assemble()
+b = dolfinx.fem.petsc.assemble_vector(L)
+dolfinx.fem.petsc.apply_lifting(b, [a], bcs=[bdirichlet])
+b.ghostUpdate(addv=PETSc.InsertMode.ADD, mode=PETSc.ScatterMode.REVERSE)
+dolfinx.fem.petsc.set_bc(b, bdirichlet)
+\end{lstlisting}
+where:
+\begin{itemize}	
+	\item \mycode{bdirichlet} is the Dirichlet boundary condition, defined e.g. by listing \ref{pyfendiri}
+	\item \mycodepy{A} and \mycodepy{b} are respectively the generated matrix and vector of the linear algebra system to be computed to solve the problem.
+	\item lines 4 and 6 are the calls related to the Dirichlet boundary condition treatment as explained in section \ref{bc_dirichlet} (non-zero contribution and setting).
+	\item lines 2 and 5 are calls to functions that synchronise information between processes.
+\end{itemize}
+
+
+
+
+
+
+
+
+
+With the FEniCSx C++ API, in linear and non-linear, the user is responsible for explicitly implementing the assembly step  that can be summarized as follows with Dirichlet boundary conditions for a linear formulation (like in listing \ref{asslinfen}): 
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=assfenicslinlin]
+la::Vector<scalar> b(V->dofmap()->index_map,V->dofmap()->index_map_bs());
+auto field_array=x->x()->mutable_array();
+b.set(0);	
+fem::assemble_vector<scalar>(b.mutable_array(), *lin_form);
+fem::apply_lifting<scalar, scalar_dolf>(b.mutable_array(), {bilin_form}, {{bclamp,bimp}}, {field_array}, -1.);
+b.scatter_rev(std::plus<scalar>()); 
+\end{lstlisting}
+with 
+\begin{itemize}
+	\item the scalar types(\mycode{scalar},\mycode{scalar_dolf})  described in listing \ref{typedeffenicsx}
+	\item the linear and bi-linear formulation (\mycode{lin_form},\mycode{bilin_form}) and space (\mycode{V}) described in listing \ref{generalfenicsxform}
+	\item the \mycode{dolfinx::fem::DirichletBC<scalar>} (\mycode{bclamp} and \mycode{bimp}) objects described in listing \ref{dirichletfenicsxcpp}
+	\item the field (\mycode{x}) described in listing \ref{fieldfenics} that provides imposed values at Dirichlet DOFs.
+\end{itemize}
+In particular, the user must not forget to:
+\begin{itemize}
+	\item Add the Dirichlet boundary condition contribution if non-zero values are imposed (\mycode{dolfinx::fem::apply_lifting}). 
+\item Appropriately sum values at the ghost DOF in parallel (\mycode{dolfinx::la::Vector::scatter_rev}).
+\end{itemize}
+For the bi-linear formulation the assembly process with Dirichlet boundary condition can be as follows: 
+\begin{lstlisting}[numbers=none,basicstyle=\scriptsize,label=assfenicsbilinlin]
+// Matrix creation and initialization
+auto A = la::petsc::Matrix(fem::petsc::create_matrix(*bilin_form), false);
+Mat A_ = A.mat();
+MatZeroEntries(A_);
+// Assemble formulation in A Matrix
+fem::assemble_matrix(la::petsc::Matrix::set_block_fn(A_, ADD_VALUES),
+*bilin_form, {bclamp,bimp});
+// Comunicate to treat ghost dofs (PETSc)
+MatAssemblyBegin(A_, MAT_FLUSH_ASSEMBLY);
+MatAssemblyEnd(A_, MAT_FLUSH_ASSEMBLY);
+// Set Dirichlet DOFs diagonal term to 1
+fem::set_diagonal<scalar>(la::petsc::Matrix::set_fn(A_, INSERT_VALUES), *V,
+{bclamp,bimp});
+// Comunicate to treat ghost dofs (PETSc)
+MatAssemblyBegin(A_, MAT_FINAL_ASSEMBLY);
+MatAssemblyEnd(A_, MAT_FINAL_ASSEMBLY);
+\end{lstlisting}
+
+
+In non-linear, with Newton solver, these instructions have to be implemented in the operators provided by the \mycode{setF} /\mycode{setJ} method of \mycode{ dolfinx::nls::petsc::NewtonSolver}.
+
+\bigskip
+The general assembly loops are summarised in the algorithm \ref{assemblyGF}.
+\begin{algorithm}[h]
+	\footnotesize
+    \begin{algorithmic}
+\For{$id \in \mathfrak{D}$}
+\For{$i \in \mathfrak{E}_{id}$}
+\State $Ae_i,be_i\gets \text{Kernel}_{id}(\text{data}_i)$ 
+\State After possible treatment, assemble $Ae_i,be_i$ in $A,b$
+\EndFor\EndFor
+	\end{algorithmic}
+	\caption{FEniCSx general assembly loop structure with $\mathfrak{D}$, $\mathfrak{E}_{id}$ respectively the set of integral domain ids  in the treated formulation and the set of elements related to the current integral (may be a subset of the local domain). $\text{Kernel}_{id}(\text{data}_i)$ computes, for an element $i$ (described by data$_i$), the elementary "matrix,vector" with a quadrature loop corresponding to integral $id$. $Ae_i,be_i$ and $A,b$ are the elementary "matrix,vector" of element $i$ and the global "matrix,vector" respectively.\label{assemblyGF}}
+\end{algorithm}
+
+
+\subsubsection{Performances\label{perfass}}
+Apparently, in FEniCSx, compared to MFEM, there is no specific strategy to partially assemble the system and use operator applications to bypass full matrix exploitation during system resolution.
+And in FEniCSx, there is no GPU or multithreading used in the assembly task, as there might be with MFEM. 
+
+So, in the example in section \ref{expl1}, the assembly in the two codes was compared using only single-threaded code (although distributed over several cores by the MPI library), without any GPU usage.
+
+To add profiling measures to track the assembly task, one would need to hack MFEM library which is out of scope of this study.
+For this reason, only vector and matrix generation, part of the system assembly task, will be analysed in this work.
+Figure \ref{elapsed2} shows the creation of elementary vectors and matrices with the different strategies used to implement the formulation.
+The MFEM curves show a simple measure of the elapsed time between the entry and exit of the \mycode{AssembleElementVector} and \mycode{AssembleElementGrad} methods of the \mycode{damIntegrator} class for the standard and AD strategies with different computation variants. 
+The \f{} curves show the measure of the elapsed time between the entry and exit of the kernel function generated by ffcx (hacked after generation to provide this measure) for the strategy of section \ref{symb}, \ref{symbsym}, \ref{ufl} and \ref{manual}.
+Both measures are assumed to be equivalent in the context of this test case (simple element and formulation), but some details differ. In particular, in \f{}, part of the Dirichlet boundary condition treatment is done by the function \mycode{apply_lifting} (see listing \ref{asslinfen} or \ref{assfenicslinlin}), which calls the same kernel function as for matrix construction to obtain the coupling terms. Thus, for the creation of elementary matrices, part of the \f{} curves is linked to the treatment of Dirichlet boundary conditions, which is not the case in MFEM.
+Anyway  this is the best that can be done without hacking the \f{} or MFEM library to obtain more fine profiling data. 
+
+The curves show that both codes scale perfectly thanks to Metis/ParMetis, which provides load-balanced domains and a rather thin damage band that does not induce unbalanced computations (see section \ref{mat_dam}).
+
+\bigskip
+For MFEM, the following calculation variants are tested:
+\begin{itemize}
+	\item "{\color{MFEMDarkGreen}MFEM h1}": Use the generic  \mycode{mfem::H1\_FECollection} for the elements, with the volume load being calculated at each non-linear iteration when calculating the residual (i.e. in the \mycode{AssembleElementVector} method). Also, a rather generic coding is used, which calculates the weight of the transformation at each integration point, as it is not constant in high order. 
+	In this way, this variant aims to get closer to encoding higher order elements. 
+	\item "{\color{MFEMGreen}MFEM}": Use the specific \mycode{mfem::LinearFECollection} for the elements, a unique weighting (transformation) calculation for all integration points (see listing \ref{assembleElementvector}), with the volume load calculated at each non-linear iteration when calculating the residual (i.e. in the \mycode{AssembleElementVector} method). This variant is chosen as the reference because it is the closest to \f{}.
+	\item "{\color{MFEMForestGreen}MFEM Fcst}": Use the specific \mycode{mfem::LinearFECollection} for the elements, with the volume load calculated only once outside the non-linear resolution (see listing \ref{loadform}), so not in \mycode{AssembleElementVector}. 
+	Regarding profiling, the elementary volume load unique calculation is counted in the "Create elementary vectors" curve.
+	 However, the subtraction of the calculated vector from the residual vector during non-linear loops is included in the "non-linear" curve (figure \ref{time_nl} and \ref{time_nl_r}).
+\end{itemize} 
+These variants show that using the generic \mycode{mfem::H1\_FECollection} for the elements and sytematic weight of the transformation computation is costly in the context of this test case.
+"{\color{MFEMDarkGreen}MFEM h1}" is 2.7 times slower than "{\color{MFEMGreen}MFEM}" for vector computation and up to 1.45 times slower for matrix computation.
+This is related to shape function (and gradient) computations, which in the general case are obtained by solving a dense system: a factorisation and a backward/forward subtitution at each request for shape function values.
+With the \mycode{mfem::LinearFECollection} these shape functions (and gradiants) are hard coded so they can be computed much faster ( but not pre-calculated like ffcx does in \f{}).
+The cost of the \mycode{Weight} method, which is calculated once or 4 times (general case) per element, also has an impact. 
+Because behind this method there is the Jacobian computation, which does costly matrix operations.
+On the other hand, the "{\color{MFEMForestGreen}MFEM Fcst}" variant has no effect on the creation of elementary matrices, but is 1.2 times faster than "{\color{MFEMGreen}MFEM}" for elementary vectors.
+Its logical as load elementary computation is done only once with this variant, and its elementary contribution is postponed at system level by an algebraic operation (which unfortunately is not tracked in an isolated counter).
+So this 1.2 time gain would certainly be less if all contributions could be collected.
+Nevertheless, this "{\color{MFEMForestGreen}MFEM Fcst}" variant can be considered in the context of this test case, where the load is applied to the wall domain, as an efficient alternative (not proposed by \f{}). It would certainly have more effect with higher order elements (non-constant Jacobian transformation, more integration points, ...). 
+
+
+For "{\color{MFEMGreen}MFEM}" reference the AD and standard  strategy are equivalent.
+Only a small overhead (less than 1.06) appears when using AD to create the elementary matrix.
+In this case, AD replaces the computation of the complex mathematical implementation associated with the second derivative of \ref{freeenergy} with 10 ($=\frac{4\times5}{2}$) calls to the potential operator in AD mode differentiation to compute the upper triangular terms of the Hessian.
+Thanks to the small number of variables to be derived (the 4 strain components), the number of calls for AD differentiation remains small and almost transparent.
+The same observation applies to the "{\color{MFEMDarkGreen}MFEM h1}" and "{\color{MFEMForestGreen}MFEM Fcst}" variants.
+In these cases, AD and the standard strategy give ratio curves for elementary vector calculations that overlap.
+For elementary matrix generation, AD is slightly slower than the standard strategy, as in the reference variant.
+
+
+
+\bigskip 
+
+\f{} is 1.6 to 2.2 times faster than "{\color{MFEMGreen}MFEM}" reference for elementary vector calculations.
+For elementary matrix calculations, \f{} is 1.2 times slower or 1.06 times faster than "{\color{MFEMGreen}MFEM}" reference, depending on the formulation strategy used.
+This gain with \f{} kernels can be explained by the work of the ffcx compiler:
+\begin{itemize}
+	\item It computes shape function values, shape function gradient and weight at integration points. These values are stored by ffcx in static arrays in the kernel code, which no longer needs to compute them during elementary calculations.
+	\item It develops the mathematical expression into a series of elementary operations associated with local variables that are concatenated sequentially.
+	Some small loops are also coded, but there is no explicit matrix-vector or matrix-matrix operation as in MFEM.
+	This helps the C compiler with its aggressive compilation optimisation, and the kernels are immediately floating-point efficient with this test case.	 
+\end{itemize}
+Note that, as already mentioned, \f{} profiling takes into account calls to the matrix kernel when dealing with the Dirichlet contribution, which MFEM does not, so the performance of \f{} compared to MFEM is certainly even better in the context of this test case. 
+
+
+
+\bigskip
+The complete assembly task of the matrix and vector of the linear system can only be viewed in \f{}, by adding measure in lambda function used by\mycode{setF} and \mycode{setJ} method of \mycode{ dolfinx::nls::petsc::NewtonSolver}.
+In both methods, the profiling measures the full assembly task (elementary computation and addition of the elementary matrix/vector to the system matrix/vector) and the Dirichlet treatment.
+Figure \ref{time_ass_f} shows that the full assembly task  (crea+ass curves) scale relatively well. 
+Another full assembly task measure is also shown in this figure, but without kernel profiling (crea no prof+ass curves).
+This shows that the profiling of kernels has a small effect on the profiling of the functions that call them.
+ By dividing the curves in Figure \ref{elapsed2} by the curve in Figure \ref{time_ass_f}, it can be seen that elementary creation represents only 22 to 37\% of the full assembly task with Dirichlet treatment.
+ And since these ratios are relatively stable with the number of processes, it can be assumed that the assembly task itself and the Dirichlet treatment also scale well.
+
+
+\bigskip	
+As an alternative to profiling using times measured at specific locations, the Valgrind callgrind tool can be used.
+Running the simulation with this tool is much slower, so it was only used on an unrefined mesh, producing the results (focusing on vector/matrix construction) shown in figures \ref{callgrindF} and \ref{callgrindM}.
+\begin{table}[h]
+	\begin{tabular}{c|c|c|c|c|}
+		\cline{2-5}
+		& handmade & UFL & sympy & sympy sym \\ \hline
+		\multicolumn{1}{|l|}{vector} & \footnotesize $\frac{10~526~934~750}{3~171~489~252}\approx3.32$ & \footnotesize $\frac{10~526~934~750}{2~873~391~266}\approx3.66$ & \footnotesize $\frac{10~526~934~750}{2~616~863~101}\approx4.02$ & \footnotesize $\frac{10~526~934~750}{2~638~397~649}\approx3.99$  \\ \hline
+		\multicolumn{1}{|c|}{matrix} & \footnotesize $\frac{9~940~681~357}{8~372~947~591}\approx1.19$ & \footnotesize $\frac{9~940~681~357}{8~377~993~751}\approx1.19$ & \footnotesize $\frac{9~940~681~357}{7~036~416~905}\approx1.41$ & \footnotesize
+		$\frac{9~940~681~357}{6~906~577~463}\approx1.44$ \\ \hline
+	\end{tabular}
+	\caption{Ratio of "{\color{MFEMGreen}MFEM}" reference and \f{} (different strategies) callgrind instruction counts.\label{callgrindratioex1}}
+\end{table}
+From these figures,  using the callgrind instruction counts, one can obtain the same kind of ratio as in figures \ref{elapsd2rv} and \ref{elapsd2rm}, which are given in table \ref{callgrindratioex1}.
+The ratios obtained in this way are larger\footnote{Valgrind counting can be abused in C++ when using a function object (which is the case in \f{} regarding kernel wrapping), so only tandency needs to be considered.} than those obtained by measuring elapsed time, but give the same trends.
+They show that \f{} performs better in this test case, especially for vector creation. These gains are even more significant if we consider the elementary computational task not by simulation but by non-linear iteration.
+In fact, with \f{} we iterate more.
+With unrefined mesh \f{} and MFEM iterates 6 and 4 times respectively.
+So the ratio of the table \ref{callgrindratioex1} must be multiplied by $\frac{6}{4}=1.5$, which gives a gain per non-linear iteration from 1.79 to 6.03 with \f{} compared to MFEM.
+
+\bigskip
+Finally, the different \f{} strategies of the \ref{symb}, \ref{symbsym}, \ref{ufl} and \ref{manual} sections can be compared using both profiling (elapsed time and number of callgrind instructions). 	
+From slower to faster strategies are handmade (\ref{manual}), UFL (\ref{ufl}), sympy (\ref{symb}), and sympy symmetric (\ref{symbsym}).
+First, we can see that the number of lines of C code (given in the captions of the figure \ref{callgrindF} ), which more or less represents the set of instructions generated by ffcx, follows roughly this order (fewer lines, fewer instruction counts).
+But the number of lines of C code is not the only parameter, as better test locations or cheaper algebraic instructions can lead to more lines but fewer instructions (as with vector generation for handmade and UFL strategies).
+But clearly sympy strategies (symmetric or not) seem to be a bit more efficient. We can imagine that sympy expressions are then simplified as they pass through the \mycodepy{simplify} method, thus producing smaller UFL expressions compared to the strategy of sections\ref{ufl} and \ref{manual}. These simplifications only apply to the stress expression, but since the Jacobian is derived from the stress, it seems that the maxtrix generation is also affected by these sympy simplifications. This suggests that if sympy can simplify long mathematical expressions, it is worth trying to use it instead of just using UFL expressions.
+As for the handmade version, it is clearly not implemented optimally.
+Sure, working on it can lead to better performance, but why do the work of UFL or Sympy? 
+
+
+
+ 
+
+\section{Boundary condition(point \ref{point_bc})}
+
+\subsection{Dirichlet\label{bc_dirichlet}}
+The Dirichlet boundary condition can be treated in several ways. Here are 3 classic approaches:
+\begin{enumerate}
+	\item  Eliminate the Dirichlet DOFs from the system and add the non-zero imposed DOF contribution to the right-hand term of the system.(reduce system size)
+	\item Add Lagrange multipliers to impose Dirichlet dofs. Imposed values are set directly in the right-hand terms of the system on associated Lagrange multipliers DOF.  (increase system size)
+	\item Change the system matrix row and column associated with the Dirichlet DOFS so that the corresponding sub-block is an identity matrix. Imposed values are set directly in the solution or right-hand terms of the system. (system size is unchanged).
+\end{enumerate}
+Both libraries use the identity approach (3 above) in most of the cases presented in their documentation. 
+The modification of matrix terms is almost transparent to the user. 
+The user is simply responsible for constructing the list of DOFs of type Dirichlet and setting the imposed value in the solution or the right-hand terms of the system.
+
+With MFEM, a simple mechanism to generate the list of Dirichlet DOFs is to use the physical properties of the mesh (\mycode{pmesh}) and the discretisation space(\mycode{space}): 
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=listDiriDoffs]
+	// array to mark prop of interest 
+	Array<int> ess_bdr(pmesh->bdr_attributes.Max());
+	ess_bdr = 0;
+	ess_bdr[XX] = 1;
+	ess_bdr[YY] = 1;
+	...
+	// array to store dof of interest
+	Array<int> ess_tdof_list;
+	// get list of dof
+	space.GetEssentialTrueDofs(ess_bdr, ess_tdof_list);
+\end{lstlisting}
+The list \mycode{ess_tdof_list} is then made available to the non-linear form using the \mycode{mfem::ParNonlinearForm::SetEssentialTrueDofs} method or when creating the system  using the \mycode{mfem::ParBilinearForm::FormLinearSystem} method of the bi-linear form.
+The solution vector is modified by imposed value before the resolution.
+
+\bigskip
+With \f{}, the following Python code uses coordinates to generate the list of Dirichlet DOFs using the mesh (\mycodepy{domain}) and discretisation space (\mycode{space}):
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=Python,label=pyfendiri]
+	clamped_nodes=mesh.locate_entities(domain, 0, lambda x: np.isclose(x[0], 0.))
+	clamped_dofs=fem.locate_dofs_topological(space,0,clamped_nodes)
+	bclamp=fem.dirichletbc(np.array([0.,0.]),clamped_dofs,space)
+	imp_nodes=mesh.locate_entities(domain, 0, lambda x: np.isclose(x[0], 1.))
+	imp_dofs=fem.locate_dofs_topological(space,0,imp_nodes)
+	bimp=fem.dirichletbc(np.array([0.01,0.]),imp_dofs,space)
+	bdirichlet=[bclamp,bimp]
+\end{lstlisting}
+In this example the 2D vector value at dof is set to \mycodepy{[0.,0.]} and \mycodepy{[0.01,0.]} for nodes with zero and one x-coordinate respectively. The \mycodepy{bdirichlet} is then used when constructing the \mycodepy{dolfinx.nls.petsc.NonlinearProblem} or \mycodepy{dolfinx.fem.petsc.LinearProblem} object. 
+It can also be used directly with the \mycodepy{dolfinx.fem.petsc.apply_lifting} function to add the contribution of non-zero Dirichlet values to the right-hand vector of the system (see for example line 4 of the listing \ref{asslinfen} ). This contribution is the product of the coupling block of the matrix (between the imposed dofs and the free dofs) and the vector of imposed dofs.
+It can also be used to set the Dirichlet rows of the right-hand side vector of the system (e.g. see line 6 of listing \ref{asslinfen}) to the imposed Dirichlet values with the \mycodepy{dolfinx.fem.petsc.set_bc} function.
+The C++ API uses the same principles:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,label=dirichletfenicsxcpp]
+const std::vector<std::int32_t> clamped_nodes = mesh::locate_entities_boundary(*pmesh, 0, [&eps](auto x) {
+	std::vector<int8_t> marker(x.extent(1), false);
+	for (std::size_t p = 0; p < x.extent(1); ++p)
+	{
+		double x0 = x(0, p);
+		if (std::abs(x0) < eps) marker[p] = true;
+	}
+	return marker;
+});
+const std::vector<std::int32_t> clamped_dofs = fem::locate_dofs_topological(*V->mesh()->topology_mutable(), *V->dofmap(), 0, clamped_nodes);
+auto bclamp = std::make_shared<fem::DirichletBC<scalar>>(u0, clamped_dofs);
+const std::vector<std::int32_t> imp_nodes = mesh::locate_entities_boundary(*pmesh, 0, [&eps](auto x) {
+	std::vector<int8_t> marker(x.extent(1), false);
+	for (std::size_t p = 0; p < x.extent(1); ++p)
+	{
+		double x0 = x(0, p);
+		if (std::abs(x0-1.) < eps) marker[p] = true;
+	}
+	return marker;
+});
+const std::vector<std::int32_t> imp_dofs = fem::locate_dofs_topological(*V->mesh()->topology_mutable(), *V->dofmap(), 0, imp_nodes);
+scalar imp[3] = {0.01, 0.};
+auto imp_val = std::make_shared<const fem::Constant<scalar>>(fem::Constant<scalar>(std::span<const scalar>(imp, 2)));
+auto bimp = std::make_shared<fem::DirichletBC<scalar>>(imp_val, imp_dofs, V);
+\end{lstlisting}
+The \mycode{dolfinx::mesh::locate_entities_boundary} function returns the list of entities (here the list of nodes) that match a given criterion based on their coordinates. 
+This list is then used with the \mycode{dolfinx::fem::locate_dofs_topological} function to obtain the list of DOFs associated with these entities by the space \mycode{V}.
+Finally, the objects of the class \mycode{dolfinx::fem::DirichletBC<scalar>} are instantiated with these lists of DOFs and the imposed values. 
+The resulting objects \mycode{bclamp} and \mycode{bimp} are then ready to be used by the \mycode{fem::apply_lifting} (listing \ref{assfenicslinlin}) and \mycode{fem::set_diagonal} (listing \ref{assfenicsbilinlin}) functions. 
+ This last function is responsible for transforming the Dirichlet dofs subblock of \mycode{A} into an identity matrix.
+
+\subsection{Neumann\label{bc_neuman}}
+As in many FEM libraries, the implementation of this type of loading, which corresponds to an additional term in the weak formulation, corresponds to an assembly task of the right-hand side of the linear or non-linear system.
+So everything shown in the \ref{systemcreation} section can be used to impose the Neumann boundary condition.
+
+
+In particular, for the example in section \ref{expl1} Neumann volume loading in \f{} is directly integrated into the formulation \mycode{F} (listing \ref{Ffenicsxpy}).
+The load vector $\vm{f}$ is constructed by interpolating \eqref{load1} onto a field. In C++ : 
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=c++]
+	auto f = std::make_shared<fem::Function<scalar>>(V);
+	f->name="f";
+	f->interpolate([](auto x) -> std::pair<std::vector<scalar>, std::vector<std::size_t>> {
+		size_t nb_col = x.extent(0);
+		size_t nb_row = x.extent(1);
+		size_t nb_col_v = 2;
+		std::vector<scalar> vdata(nb_col_v * nb_row);
+		namespace stdex = MDSPAN_IMPL_STANDARD_NAMESPACE::MDSPAN_IMPL_PROPOSED_NAMESPACE;
+		MDSPAN_IMPL_STANDARD_NAMESPACE::mdspan<
+		scalar, MDSPAN_IMPL_STANDARD_NAMESPACE::extents<std::size_t, 2, MDSPAN_IMPL_STANDARD_NAMESPACE::dynamic_extent>>
+		v(vdata.data(), nb_col_v, nb_row);
+		for (std::size_t p = 0; p < nb_row; ++p)
+		{
+			double r=x(0, p)-0.5;
+			double xf = -r * r * r;
+			double y = x(1, p) - 0.5;
+			v(0, p) = 100000.*(1600. * y * y - 500.) * xf;
+			v(1, p) = 0.;
+		}
+		return {vdata, {nb_col_v, nb_row}};
+	});
+\end{lstlisting}
+This \mycode{dolfinx::fem::Function} is then made available to the formulation via the \mycode{coefficients} map (listing \ref{generalfenicsxform}). 
+Note that the \f{} developers, in anticipation of the C++ 23 standard, use multidimensional span \mycode{mdspan} with MACRO to get the correct compiler implementation, which makes the syntax a bit hard to read.	
+For the full Python \f{} implementation, Numpy is of course used for the interpolation calculations:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+	f=fem.Function(space,name="f")
+	def f_vol_func(x):
+	nb_row = len(x[1])
+	assert nb_row == len(x[0])
+	nb_col_v = 2
+	v = np.empty((nb_col_v,nb_row))
+	xf=100000.
+	v[0,:]=-xf*np.power(x[0]-0.5,3)*(1600.*np.square(x[1]-0.5)-500.)
+	v[1,:]= 0.
+	return v
+	f.interpolate(f_vol_func)
+\end{lstlisting}
+Compared to C++, the \mycodepy{f} object is directly linked to the formulation via its expression (listing \ref{Ffenicsxpy}).
+
+
+\bigskip	
+With MFEM, still for the example of the section \ref{expl1}, two approaches can be used.
+The first one follows the \f{} implementation, and the Neumann volume loading is calculated at each non-linear iteration, directly in the \mycode{AssembleElementVector} method of the \mycode{damIntegrator} class (see end of listing \ref{assembleElementvector}). 
+However, since $\vm{f}$ is constant during all non-linear iterations, a second approach removes the second integral from the residual vector \eqref{formF} calculation in \mycode{mfem::NewtonSolver::Mult} by considering it as a precomputed vector argument that is subtracted from the assembled residual vector.
+In both cases, as to conform to \f{} interpolation, a projection of the \eqref{load1} formula onto a field using the space of the listing \ref{spacec} is used:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=c++]
+VectorFunctionCoefficient vl(dim,[](const Vector &x,Vector &f){
+	real_t r = x(0) - 0.5;
+	real_t xf = -r * r * r;
+	real_t y = x(1) - 0.5;
+	f(0) = 100000.*(1600. * y * y - 500.) * xf;
+	f(1) = 0.;
+});
+ParGridFunction load(&space);
+load.ProjectCoefficient(vl);
+\end{lstlisting}
+For efficiency, in both approaches this field is actually embedded in a class that only stores its values at integration points for a given quadrature: 
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=c++,label=qfcl]
+QuadratureSpace qspace2(pmesh, 2);
+QuadratureFunction qfl(qspace2, 2);
+qfl.ProjectGridFunction(load);
+VectorQuadratureFunctionCoefficient qfcl(qfl);
+\end{lstlisting}
+
+
+\section{Solving(point \ref{point_solve})\label{solving}}
+
+As already introduced in section \ref{assembly} the linear/non-linear algebra system resolution is handled by high level concepts.
+However, both \f{} and MFEM use mainly external libraries to solve the linear system resulting from the integration of the weak formulation of a problem. 
+All these libraries offer a wide range of parallel linear algebra methods (Krylov, factorisation, multigrid, ...) to solve sparse systems of different nature (symmetric or not, defined or not, positive or not, real or complex, ...).
+All of them are designed to be used in parallel on modern CPUs (with many cores) or GPUs.
+
+
+
+\subsection{MFEM}
+HYPRE is of course interfaced with MFEM (some MFEM contributors are also HYPRE developers), but many other libraries are possible if available (i.e. provided at MFEM compilation time).
+Among them, we can mention PETSc, which itself gives access to many libraries, AmgX (algebraic multigrid GPU-accelerated solver library from NVIDIA), Ginkgo (numerical linear algebra library targeting many-core architectures: interfaced with DPC++, OpenMP, CUDA (NVIDIA), HIP(AMD/NVIDIA), ...), SUNDIALS, MUMPS, SUPERLU, UMFPACK, PARDISO, ...
+And for eigenproblem solving, MFEM can use HYPRE's LOBPCG Eigensolver or SLEPc.
+In addition, many implementations of well-known solvers are available in the library (e.g. Preconditioned Conjugate Gradient, GMRES, MINRES, ....).
+
+In all cases, the classes used to solve a system are all derived from the \mycode{mfem::Solver} class (itself derived from \mycode{mfem:Operator}).
+The pure virtual \mycode{Mult} method must be implemented in the derived class. 
+This method takes two arguments, \mycode{x} and \mycode{y}.
+\mycode{y} is the result of "applying" the operator to \mycode{x} and corresponds to the resolution of the linear  system associated with the solver. 
+The following code illustrate the use of the  gradient conjugate solver  with the HYPRE Boomeramg algebraic multi grid preconditionner to solve a linear system constructed from \mycode{a} and \mycode{b} respectively instance of \mycode{ParBilinearForm} and \mycode{ParLinearForm}.
+\begin{lstlisting}[basicstyle=\footnotesize,language=c++,label=mfemlin]
+Vector B, X;
+OperatorPtr A;
+a.FormLinearSystem(ess_tdof_list, x, b, A, X, B);
+HypreBoomerAMG prec;
+prec.SetElasticityOptions(&space, true);
+CGSolver lin_solv(MPI_COMM_WORLD);
+lin_solv.SetRelTol(1e-12);
+lin_solv.SetMaxIter(2000);
+lin_solv.SetPreconditioner(prec);
+lin_solv.SetOperator(*A);
+lin_solv.Mult(B, X);
+a.RecoverFEMSolution(X, b, x);
+\end{lstlisting}
+In this example:
+\begin{itemize}
+	\item Algebraic containers are created in lines 1 (vectors) and 2 (matrix).
+	\item Line 3 the system creation is finished:
+	\begin{itemize}
+		\item assign the matrix in \mycode{a} ( assembly of section \ref{assemblyMFEM} ) to \mycode{A}
+		\item assign the vector in \mycode{b} ( assembly of section \ref{assemblyMFEM} ) to \mycode{B}
+		\item assign the vector in \mycode{x} field ( listing \ref{xfield} ) to \mycode{X}
+		\item Use \mycode{ess_tdof_list} (listing \ref{listDiriDoffs}) to check if  Dirichlet boundary condition exist and if yes:
+		\begin{itemize}
+			\item treat the Dirichlet boundary condition by adding its contribution to \mycode{B}
+			\item treat the Dirichlet boundary condition by replacing the Dirichlet sub-block of A with an identity block
+		\end{itemize}
+		\item  ...
+	\end{itemize}
+    \item The HYPRE Boomeramg preconditioner is created in line 4.
+    \item The preconditioner is tuned to remove rigid-body modes introduced by mechanical elasticity (in this example it is an elasticity problem) in line 5.
+    \item In line 6 the linear solver instance (conjugate gradient solver) is created.
+    \item As this solver is an iterative solver, lines 7 and 8 impose some rules on the solver to make it converge (stop iteration).
+    \item The preconditioner and the operator (i.e. A matrix in this example) are attached to the solver in lines 9 and 10.
+    \item Finally, the system is solved considering that \mycode{A} is "applied" to \mycode{B} giving \mycode{X} solution ($\vm{X}=\vm{A}^{-1}.\vm{B}$).
+    \item The \mycode{X} solution is then used in line 12 to reset \mycode{x} field appropriately using the \mycode{mfem::ParBilinearForm::RecoverFEMSolution} method. This line must be used when constructing the linear system with \mycode{mfem::ParBilinearForm::FormLinearSystem}. 
+\end{itemize} 
+
+In the same way the resolution of a non-linear problem defined by a \mycode{mfem::ParNonlinearForm} instance \mycode{F} can be coded as follows:
+\begin{lstlisting}[basicstyle=\footnotesize,language=c++,label=mfemnlstd]
+F.SetEssentialTrueDofs(ess_tdof_list);
+Vector X(space.GetTrueVSize());
+X=0.;
+HypreBoomerAMG prec;
+prec.SetElasticityOptions(&space, true);
+CGSolver lin_solv(MPI_COMM_WORLD);
+lin_solv.SetRelTol(1e-12);
+lin_solv.SetMaxIter(2000);
+lin_solv.SetPreconditioner(prec);
+NewtonSolver nl_solv(MPI_COMM_WORLD);
+nl_solv.SetSolver(lin_solv);
+nl_solv.SetOperator(F);
+nl_solv.SetMaxIter(10);
+nl_solv.SetRelTol(1.e-7);
+nl_solv.SetAbsTol(5.e-8);
+Vector zero;
+x.ParallelProject(X);
+nl_solv.Mult(zero, X);
+x.SetFromTrueDofs(X);
+\end{lstlisting}
+In this example:
+\begin{itemize}
+	\item The list (listing \ref{listDiriDoffs}) of Dirichlet DOFs (if any) must be assigned to the \mycode{F} object. This is done in line 1.
+	\item The solution to the non-linear problem will be stored in a vector \mycode{X} set to zero (lines 2 and 3).
+	\item Lines 4 to 9 are exactly the same as lines 4 to 9 of the listing \ref{mfemlin}, which create and configures a linear solver to be used by the Newton solver.
+	\item Line 10 creates a Newton solver instance.
+	\item The linear solver and the non-linear formulation (i.e. \mycode{F} ) are attached to the Newton solver in lines 11 and 12.
+	\item As this Newton solver is an iterative solver, lines 13 to 15 impose some rules on the non-linear loop to make it converge (stop iteration).
+	\item In this example there is no right hand side vector to provide to the Newton solver (i.e. it may be embedded in \mycode{F}). So a dummy empty vector is created in line16, which is interpreted as zero r.h.s. by the Newton solver. Alternatively, as mentioned in the \ref{mfem_std} section, if a constant load is applied to the system, it can be calculated once as in the \ref{loadform} listing and then the computed \mycode{b} vector replaces the \mycode{zero} vector in line 18 so that it can be subtracted from the residual vector during non-linear loops.	
+	\item Lines 17 and 19 transfer the information from/to the \mycode{x} field (listing \ref{xfield}) to/from the \mycode{X} vector (required in parallel).
+	\item In line 18 the non-linear system is solved by calling the \mycode{Mult} method and its solution (if any) is stored in \mycode{X}. 
+\end{itemize}
+Note that in non-linear resolution the relative tolerance parameter (1.e-12), which determines the convergence of the linear solver, has a large influence on the number of non-linear iterations and the computation time.
+A larger value may increase the number of non-linear iterations, but the elapsed time may decrease because linear convergence is faster.
+This is an aspect that is used in the Newton–Krylov method.
+
+
+Note that for the test case in section \ref{expl1} the following setting was used for the preconditioner of the linear solver:
+\begin{lstlisting}[basicstyle=\footnotesize,language=c++,label=mfemboomset]	
+HypreBoomerAMG prec;
+HYPRE_Solver prec_amg(prec);
+HYPRE_BoomerAMGSetNumFunctions(prec_amg, 2);
+HYPRE_BoomerAMGSetAggNumLevels(prec_amg, 0);
+HYPRE_BoomerAMGSetStrongThreshold(prec_amg, 0.25);
+prec.SetErrorMode(HypreSolver::ErrorMode::IGNORE_HYPRE_ERRORS);
+\end{lstlisting}
+This configuration was found after some testing. It gives the best performance in the context of this test case and allows us to converge on the \f{} configuration. 
+In this setting, unlike the listings \ref{mfemlin} and \ref{mfemnlstd} , the \mycode{SetElasticityOptions} method is not used.
+Instead, the default setting is used and some additional tuning is done by constructing a \mycode{HYPRE_Solver} instance (line 2) with a \mycode{prec} instance.
+ In this way, the HYPRE's functions can be used directly to set the number of functions (line 3), the aggressive coarsening (line 4) and the imposed strong threshold (line 5).
+ Line 6 bypass HYPRE errors. This was set after analysis of \mycode{SetElasticityOptions}, which also skips them.
+ Otherwise it don't work.
+
+\subsection{\f{}}
+
+For \f{}, only PETSc (for linear/non-linear resolution) and SLEPc (for eigenresolution) are interfaced.
+\subsubsection{linear}
+Two approaches to linear problems using linear systems are available with the Python API.
+The first one uses \mycodepy{petsc4py} to set the solver:
+
+\begin{lstlisting}[basicstyle=\footnotesize,language=python,label=fenlinsolverpy]
+opts = PETSc.Options()
+opts["ksp_type"] = "preonly"
+opts["pc_type"] = "lu"
+solver = PETSc.KSP().create(domain.comm)
+solver.setFromOptions()
+solver.setOperators(A)
+solver.solve(b, x.x.petsc_vec)
+x.x.scatter_forward() 
+\end{lstlisting}
+Line 4 creates a solver (based on the same communicator as the mesh \mycodepy{domain}).
+In this example, the PETSc option mechanism is used to tune this solver to be a direct solver (lines 1,2,3 and 5).  
+Then the operator (i.e. A matrix in this example e.g. listing \ref{asslinfen}) is attached to the solver in lines 6. The \mycodepy{solver} object is then ready to resolve the system.
+Given the right-hand side \mycodepy{b} vector (e.g. listing \ref{asslinfen}), the solution field \mycodepy{x} (e.g. listing \ref{pyx}) of the system is computed by the \mycodepy{solve} method of the \mycodepy{solver} object in line 7.
+Line 8 synchronises the solution across processes.
+ 
+	
+The second approach encapsulates everything (assembly and resolution) in a \mycodepy{dolfinx.fem.petsc.LinearProblem} object, as shown below:
+\begin{lstlisting}[basicstyle=\footnotesize,language=python]
+problem = fem.petsc.LinearProblem( a, L, u=x, bcs=bdirichlet, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+problem.solve()
+\end{lstlisting}
+
+In line 1 the creation of the object \mycodepy{problem} requires a bilinear form (\mycodepy{a}), a linear form (\mycodepy{L}), a field to store the solution (\mycodepy{x}) and a Dirichlet boundary condition (bdirichlet). 
+The optional \mycodepy{petsc_options} gives a way to configure the embedded PETSc linear solver (here to make it a direct solver). 
+Line 2 does the equivalent of listing \ref{asslinfen} and \ref{fenlinsolverpy}, providing the solution of the assembled system in the field \mycodepy{x}. 
+
+With the C++ API, only the first approach (using the C++ PETSc API directly) exists, as the \mycodepy{dolfinx.fem.petsc.LinearProblem} is only implemented in Python:
+\begin{lstlisting}[basicstyle=\footnotesize,language=c++]
+la::petsc::options::set("ksp_type", "preonly");
+la::petsc::options::set("pc_type", "lu");
+la::petsc::KrylovSolver solver(MPI_COMM_WORLD);
+solver.set_from_options();
+solver.set_operator(A.mat());
+la::petsc::Vector x_petsc(la::petsc::create_vector_wrap(*x->x()), false);
+la::petsc::Vector b_petsc(la::petsc::create_vector_wrap(b), false);
+solver.solve(x_petsc.vec(), b_petsc.vec());
+x->x()->scatter_fwd();
+\end{lstlisting}
+It corresponds exactly to the \ref{asslinfen} listing, except that \mycode{x} and \mycode{b} vectors must be encapsulated in the PETSc vector (lines 6 and 7) when passed to the \mycode{solve} method of the PETSc KrylovSolver instance.
+
+
+
+\subsubsection{Non-linear}
+
+For the non-linear problem in the example in section \ref{expl1}, the Newton solver object is fed either by the \mycodepy{dolfinx.fem.petsc.NonlinearProblem} object (Python API) or directly by the \mycode{setF}/\mycode{setJ} methods of the \mycode{NewtonSolver} class itself (C++ API).
+In both cases the \mycode{dolfinx::nls::petsc::NewtonSolver} (or its derived Python equivalent \mycodepy{dolfinx.nls.petsc.NewtonSolver}) embeds a PETSc linear solver instance to solve the linear system resulting from linearising the non-linear problem at each non-linear loop.
+The parameterisation of this linear solver is done after its construction (by the Newton solver constructor). 
+The following are the Python API instructions to solve the non-linear problem of the example in section \ref{expl1}:
+\begin{lstlisting}[basicstyle=\footnotesize,language=python,label=fenlinsolverpy]
+problem = fem.petsc.NonlinearProblem(F, u, bdirichlet,J)
+newton_solver = nls.petsc.NewtonSolver(MPI.COMM_WORLD, problem)
+ksp = newton_solver.krylov_solver
+opts = PETSc.Options()
+option_prefix = ksp.getOptionsPrefix()
+opts[f"{option_prefix}ksp_type"] = "cg"
+opts[f"{option_prefix}ksp_rtol"] = "1e-12"
+opts[f"{option_prefix}pc_type"] = "hypre"
+opts[f"{option_prefix}pc_hypre_type"] = "boomeramg"
+opts[f"{option_prefix}pc_hypre_type"] = "boomeramg"
+opts[f"{option_prefix}pc_hypre_boomeramg_coarsen_type"] = "HMIS"
+opts[f"{option_prefix}pc_hypre_boomeramg_relax_type_up"] = "l1scaled-SOR/Jacobi"
+opts[f"{option_prefix}pc_hypre_boomeramg_relax_type_down"] = "l1scaled-SOR/Jacobi"
+opts[f"{option_prefix}pc_hypre_boomeramg_relax_type_coarse"] = "Gaussian-elimination"
+opts[f"{option_prefix}pc_hypre_boomeramg_interp_type"] = "ext+i"
+opts[f"{option_prefix}pc_hypre_boomeramg_numfunctions"] = "2"
+opts[f"{option_prefix}pc_hypre_boomeramg_agg_nl"] = "0"
+opts[f"{option_prefix}pc_hypre_boomeramg_strong_threshold"] = "0.25"
+opts[f"{option_prefix}pc_hypre_boomeramg_print_statistics"] = "1"
+ksp.setFromOptions()
+newton_solver.rtol = 1.e-7
+newton_solver.atol = 5.e-8
+r=newton_solver.solve(u)
+\end{lstlisting}
+where:
+\begin{itemize}
+	\item Line 1 creates the non-linear problem object from \mycodepy{F} (e.g. listing \ref{Ffenicsxpy}), \mycodepy{J} (e.g. listing \ref{Jfenicsxpy} ), \mycodepy{bdirichlet} (e.g. listing \ref{pyfendiri}) and \mycodepy{u} (e.g. listing \ref{pyx}).
+	\item The Newton solver instance is created from the non-linear problem in line 2.
+	\item The linear solver is extracted from the Newton solver instance as the variable \mycodepy{ksp} on line 3.
+	\item Lines 4 to 19 set options which are passed to \mycodepy{ksp} in line 20. This setting is the same as the one specified in the \ref{mfemboomset} listing for MFEM.
+	\item Lines 21 and 22 set the Newton solver itself.
+	\item The non-linear resolution can then be calculated using the solve function in line 23.
+\end{itemize}
+
+With the C++ API instruction it is the same principle:
+\begin{lstlisting}[basicstyle=\footnotesize,language=c++]
+dolfinx::nls::petsc::NewtonSolver newton_solver(MPI_COMM_WORLD);
+KSP ksp = newton_solver.get_krylov_solver().ksp();
+KSPSetTolerances(ksp, 1.e-12, PETSC_DEFAULT, PETSC_DEFAULT, 2000);
+PetscOptionsSetValue(NULL, "-nls_solve_ksp_type", "cg");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_type", "hypre");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_type", "boomeramg");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_print_statistics", "1");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_coarsen_type", "HMIS");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_relax_type_up", "l1scaled-SOR/Jacobi");  
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_relax_type_down", "l1scaled-SOR/Jacobi");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_relax_type_coarse", "Gaussian-elimination");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_interp_type", "ext+i");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_numfunctions", "2");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_agg_nl", "0");
+PetscOptionsSetValue(NULL, "-nls_solve_pc_hypre_boomeramg_strong_threshold", "0.25");
+KSPSetFromOptions(ksp);
+newton_solver.max_it=10;
+newton_solver.rtol = 1.e-7;
+newton_solver.atol = 5.e-8;
+newton_solver.setF(.....
+newton_solver.setJ(.....
+......
+std::pair<int, bool> r = newton_solver.solve(x_petsc.vec());
+\end{lstlisting}
+except that the non-linear problem (formulations, boundary conditions) is passed to the Newton solver via \mycode{setF}, \mycode{setJ}, ... (lines 20 to 22). 	
+
+\subsection{Performances\label{solv_perf}}
+The elapsed time in the solve/Mult method of the non-linear resolution, corresponding to the example in section \ref{expl1}, is given in figure \ref{time_nl}.
+As MFEM needs 5 iterations to converge and \f{} 7, the elapsed times in this figure are given per non-linear iteration (i.e. elapsed time divided by number of non-linear iterations).
+In this way, the comparison between MFEM and \f{} focuses on the non-linear iteration performance and is not affected by the convergence criterion (which is slightly different in the two libraries, as discussed below).
+
+In all cases (\f{} strategies and MFEM variants) the curves show a fairly good scalability: for MFEM only the first point is strange and for \f{} a slight deterioration is observed for a high number of processes.
+The elapsed time of the non-linear iteration is mainly dominated by the linear system resolution.
+Thanks to the common setup of the PETSc instance (PCG with Boomeramg preconditioner with specific options), this part is expected to be the same\footnote{Nevertheless, the PETSc solver with the Hypre Boomeramg preconditioner seems to exhibit some elapsed time fluctuation has observer in test not presented here.} between the two libraries. 
+The remaining tasks (in this test case: residual vector norm, solution update and parallel system assembly) are certainly the ones responsible for the rather small variations shown in figure \ref{time_nl}. 
+The figure \ref{time_nl_r} shows the ratio of the different strategies and variants against the "{\color{MFEMGreen}MFEM}" reference.
+\f{} is 1.05 to 1.35 times faster than MFEM for up to 32 processes, and becomes slower (1.15 to 1.2 times) for 64 and 128 processes.
+As the non-linear iteration includes the measure of the figures \ref{elapsd2rv} and \ref{elapsd2rm}, it can be assumed that the matrix and vector generation are not involved in this small \f{} scalability degradation, as they scale perfectly.
+So the assembly could be the source of this degradation (but this is not clear in the figure \ref{time_ass_f}) or the parallel vector computation (residual norm) and perhaps some linear solver fluctuation. 
+In any case, all \f{} strategies are consistent, as are all MFEM variants.
+
+\bigskip 
+Regarding the non-linear convergence criterion, MFEM uses an absolute and relative test on the norm $r$ of the residual vector (the first test satisfied (i.e. less than the thresholds) stops the loop).
+For the relative test, the current $r$ is divided by the norm of the residual vector computed at the beginning of the nonlinear loops: $r_0$. 
+With \f{} the same tests are used, but surprisingly $r_0$ is the vector norm of the first variation of the solution: $r_0=|\left( \delta \vm{u} \right)_0|$.
+This caused $r$ to be divided by something smaller than in MFEM and forced the non-linear resolution to iterate 2 more times (as the absolute threshold is not reached in either library and only the relative test is involved in convergence).
+\section{Output (point \ref{point_out})}
+\subsection{Save to file}
+Both MFEM and \f{} can use different output format to save various information ( fields, constant, ...). 
+Those outputs can be operated in sequential or in parallel. 
+In particular, both libraries can use ADIOS2 library for parallel outputs.
+
+With \f{} each space imply a different output stream but fields on these space can be grouped.
+With test case  of section \ref{expl1}  outputting displacement (\mycodepy{u}), Neuman loading (\mycodepy{f}), Young's modulus constant (\mycodepy{E}) and mesh partition id (\mycodepy{part}) can be done in python with the following instructions:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=python]
+filename = Path(f"XXX_{MPI.COMM_WORLD.Get_size():d}.bp")
+with VTXWriter(MPI.COMM_WORLD, filename, [u,f]) as ofile:
+	ofile.write(0.)
+filename = Path(f"YYY_{MPI.COMM_WORLD.Get_size():d}.bp")
+with VTXWriter(MPI.COMM_WORLD, filename, [E,part]) as ofile:
+	ofile.write(0.)
+\end{lstlisting}   
+where XXX and YYY are dummy file names (with path location). The same outputs in C++ is given by the following instructions:
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=c++]
+{
+	std::string n = "XXX_" + std::to_string(nb_proc) + ".bp";
+	io::adios2_writer::U<scalar_dolf> fields = {u, f};
+	io::VTXWriter<scalar_dolf> vtx(MPI_COMM_WORLD, n, fields, "bp4");
+	vtx.write(0);
+}
+{
+	std::string n = "YYY_" + std::to_string(nb_proc) + ".bp";
+	io::adios2_writer::U<scalar_dolf> fields = {E, part};
+	io::VTXWriter<scalar_dolf> vtx(MPI_COMM_WORLD, n, fields, "bp4");
+	vtx.write(0);
+}
+\end{lstlisting}
+In this case ADIOS2 engine type is set to \mycode{bp4}. In python example engine is not set explicitely and thus is \mycode{BPFile} which in ADIOS2 library may correspond to  \mycode{bp4} or \mycode{bp5} depending on library version.
+
+With MFEM, all information can be outputed in a single files. The output example above is then given by the following set of C++ instruction :       
+\begin{lstlisting}[numbers=none,basicstyle=\footnotesize,language=c++]
+std::string n = "ZZZ_" + std::to_string(nb_proc) + ".bp";
+adios2stream os(n, adios2stream::openmode::out, MPI_COMM_WORLD, "BP4");
+pmesh->Print(os);
+x.Save(os, "disp_mfem");
+part.Save(os, "part");
+Ef.Save(os, "E");
+load.Save(os, "load");
+\end{lstlisting} 
+where \mycode{x}, \mycode{part}, \mycode{Ef} and \mycode{load} corresponds respectively to \f{} fields  \mycode{u}, \mycode{part}, \mycode{E} and \mycode{f}.
+
+
+\subsection{Use streaming channel/interfaced library}
+In this work it has not been tested (yet?), but results in both libraries can be redirected directly to visualisation tools without the use of an intermediate set of files.
+In MFEM a \mycode{streaming channel} can be opened to connect to the GLVis product. 
+In \f{}, by using the Python API, you can use any tool adapted to the visualisation of fields on a mesh, and pyvista is, from the demos, the library to work with.
+\subsection{Preformances}
+Regarding the output, the elapsed time for the test case of the section \ref{expl1} shown in figures \ref{time_output} and \ref{time_output_r} lead to the following observations:
+\begin{itemize}
+	\item In sequential MFEM is from 5 to 10 times slower then \f{}. After investigation, it appears that in fact MFEM is outputting information at nodes per element and \f{} only at nodes. This induces that MFEM output $\sim$6\footnote{the ratio is obtained on one field where the total number of outputted information (scalar or vector) are compared: $\frac{36916368 ~\text{MFEM}}{6168934 ~\text{\f{}}}$}  times more information per field compare to FEniCS. 
+	\item MFEM scale well and \f{} not. Maybe the fact that \f{} outputs are split in 4 different files/stream has an impact but it is quite surprising.
+	\item \f{} output with the python version is slightly different (slightly better for more than 16 processes) compared to the C++ version.
+	Except the ADIOS2 engine format which is explicit in the C++ version there is no real reason for this difference (same computer,compiler,...).
+	Perhaps some difference in the hardware disk IO load between the two benchmark campaigns (C++ and python) explains this fact.
+\end{itemize}
+
+\section{Results of test case of section \ref{expl1} }
+The displacement field obtained in traction with a double refined mesh is shown in figure \ref{displacement}. 
+In figure \ref{displacement_full} the general view of the displacement for MFEM, \f{\_C++} (\f{} using c++ api) and \f{\_py}  (\f{} using python api) looks similar.
+The Derichlet boundary conditions ((0.,0.) on the left-hand side, (0.1,0.) on the right-hand side) are correctly taken into account in all the simulations. 
+The non-uniformity of Young's modulus is also clearly evident in all simulations, as the top and bottom edges of the part do not have a smooth displacement. 
+Figures \ref{displacement_zoom} and \ref{displacement_zoom2} zoom in on two damaged zones. 
+The asymmetric law clearly influence the displacement as damaged zone exhibit large mesh deformation related to displacement jump associated with rigidity loss in traction.
+ In compression (horizontal damaged zone in figure \ref{displacement_zoom2}), rigidity is maintained and there is no displacement jump. On the same figure, due to Young's modulus difference in grains and damage orientation, some opening can be observed, has some traction occurs.
+ In all cases all simulations give the same jumps at the same locations. 
+\begin{figure}
+		\subfloat[general view]{	
+		\includegraphics[width=0.9\textwidth]{disp.png}
+		\label{displacement_full}
+	}\\
+	\subfloat[zoom lower part]{	
+		\includegraphics[width=0.9\textwidth]{disp_zoom.png}
+		\label{displacement_zoom}
+	}\\
+	\subfloat[zoom upper part (with damage field coloring on MFEM deformed mesh)]{	
+	\includegraphics[width=0.9\textwidth]{disp_zoom2.png}
+	\label{displacement_zoom2}
+}
+	\caption{Displacement field given by MFEM (left) \f{\_C++}(center) and \f{\_py}(right) for the test case of section \ref{expl1} in traction.\label{displacement}}
+\end{figure}
+
+The strain tensor component $\tens{\epsilon}_{xx}$ is shown in figure \ref{strainxx} and \ref{strainxx_comp} with \f{} and MFEM simulations. 
+Simulations are consistent. 
+\begin{figure}
+\subfloat[upper view]{	
+	\includegraphics[width=1.\textwidth]{strainxx_up.png}
+	\label{strain_xx_up}
+}\\
+	\subfloat[lower view]{	
+	\includegraphics[width=1.\textwidth]{strainxx.png}
+	\label{strain_xx_down}
+}
+	\caption{Strain  field component $\tens{\epsilon}_{xx}$ given by MFEM (left) \f{\_C++}(center) and \f{\_py}(right) for the test case of section \ref{expl1} in traction.\label{strainxx}}
+\end{figure}
+Tensile deformation is clearly related to stiffness weakness, either due to damage or low modulus of elasticity, as shown in figure \ref{strainxx_comp} by comparing these fields. 
+
+\begin{figure}
+	\subfloat[with damage]{	
+		\includegraphics[width=1.\textwidth]{strainxx_up_dam.png}
+		\label{strain_xx_up_d}
+	}\\
+	\subfloat[with Young's modulus]{	
+		\includegraphics[width=1.\textwidth]{strainxx_up_E.png}
+		\label{strain_xx_up_E}
+	}
+	\caption{Strain  field component $\tens{\epsilon}_{xx}$ given by MFEM (center)  and \f{\_C++}(right) for the test case of section \ref{expl1} in traction. Damage and Young Modulus, coefficient (left) give  localization of rigidity weakness that involve deformation. \label{strainxx_comp}}
+\end{figure}
+\begin{figure}	
+	\includegraphics[width=1.\textwidth]{strainyy_up.png}
+	\caption{Strain  field component $\tens{\epsilon}_{yy}$ given by MFEM (left) \f{\_C++}(center) and \f{\_py}(right) for the test case of section \ref{expl1} in traction.\label{strainyy}}
+\end{figure}
+\begin{figure}	
+	\includegraphics[width=1.\textwidth]{strainxy.png}
+	\caption{Strain  field component $\tens{\epsilon}_{xy}$ given by MFEM (left) \f{\_C++}(center) and \f{\_py}(right) for the test case of section \ref{expl1} in traction.\label{strainxy}}
+\end{figure}
+\begin{figure}	
+	\includegraphics[width=0.33\textwidth]{strainxx_comp.png}\includegraphics[width=0.33\textwidth]{strainyy_comp.png}\includegraphics[width=0.33\textwidth]{strainxy_comp.png}
+	\caption{Strain  field component $\tens{\epsilon}_{xx}$,$\tens{\epsilon}_{yy}$ and $\tens{\epsilon}_{xy}$ given by  \f{\_C++} for the test case of section \ref{expl1} in compression without volume force.\label{strain_comp}}
+\end{figure}
+
+\clearpage
+
+Quantitative comparison of both code for test case of section \ref{expl1} in traction  is done via extra code that:
+
+
+\begin{itemize}
+	\item in MFEM, at the end of the simulation, export the mesh and displacement field to a binary file (via handmade code).
+	\item in \f{} or MFEM AD (MFEM with Automatic Differentiation of section \ref{AD})
+	\begin{itemize}
+		\item  import (from binary file via handmade code) MFEM grid coordinates and field ($\vm{u}_{MFEM}$) values at the end of simulation.
+		\item with both field (\f{} or MFEM AD  and MFEM):
+		\begin{itemize}
+			\item  Compute at node the displacement vector difference $\delta \vm{u}_{sol}$ by using coordinates to associate results. $\delta \vm{u}_{sol}=\vm{u}_{sol}-\vm{u}_{MFEM}$ where $\vm{u}_{sol}$ is the displacements of \f{} or MFEM AD  resolution.
+		\item At the same time, calculate the L2 norm per component of $\delta \vm{u}_{sol}$. The error in displacement for the $x$ component using the L2 norm is:   $L2_x(\vm{u}_{sol})=\sqrt{\delta \vm{u}_{sol}^t.\vm{OP}_x.\delta \vm{u}_{sol}}$ with $\vm{OP}_x$ a diagonal operator with 1 only for $x$ dofs. The error in displacement for the $y$ component using the L2 norm is: $L2_y(\vm{u}_{sol})=\sqrt{\delta \vm{u}_{sol}^t.\vm{OP}_y.\delta \vm{u}_{sol}}$ with $\vm{OP}_y$ a diagonal operator with 1 only for $y$ dofs.
+		\item Based on $\delta \vm{u}_{sol}$, calculate the elementary energy density error at the centre of the elements.
+		For an element $k$ this energy density  error is  $EE_{k}(\vm{u}_{sol})= \tens{\epsilon}\left( \delta \vm{u}_{sol}(X_k)\right):\tens{\sigma} \left( \delta \vm{u}_{sol}(X_k) \right)$ where $\tens{\sigma}$ and $\tens{\epsilon}$ come from the implementation of \eqref{sigfromphi} and \eqref{eps} respectively, and $X_k$ is the center position of element k.
+		\item At the same time, calculate the sum of these elementary energy density errors: $EE(\vm{u}_{sol})=\displaystyle\sum_{k\in \mathfrak{E}}EE_{k}(\vm{u}_{sol})$ with $\mathfrak{E}$ the set of elements.
+		\item Calculate relative (percentage) error field in displacement:\\
+		$RE_{\vm{u}}(\vm{u}_{sol})=100.\left( \frac{1}{L2_x(\vm{u}_{sol})}.\vm{OP}_x+\frac{1}{L2_y(\vm{u}_{sol})}.\vm{OP}_y\right).\delta \vm{u}_{sol}$\\
+		 and energy density:\\ $RE_{EE_k}(\vm{u}_{sol})=100.\frac{ \tens{\epsilon}\left( \delta \vm{u}_{sol}(X_k)\right):\tens{\sigma} \left( \delta \vm{u}_{sol} (X_k) \right)}{EE(\vm{u}_{sol})}$
+	\end{itemize}	\end{itemize}	
+\end{itemize} 
+For a mesh refined 2 times, MFEM AD vs. MFEM gives the following errors:
+\begin{itemize}
+	\item $L2_x(\vm{u}_{\text{MFEM AD}})=1.34818e^{-15}$m
+	\item $L2_y(\vm{u}_{\text{MFEM AD}})=6.34363e^{-16}$m
+	\item $EE(\vm{u}_{\text{MFEM AD}})=2.10673e^{-15}J/m^3$
+\end{itemize}
+These errors are small compared to the resolution thresholds (see section \ref{solving}). The distribution of these errors is shown in the figure \ref{error_ad_u_ref2}. The percentages are rather small, indicating that the distribution of the error is relatively uniform. All these elements lead to the conclusion that AD and standard solutions are the same.
+\begin{figure}	
+	\centering
+	\subfloat[Distribution of the displacement magnitude error in  \%]{\includegraphics[width=0.35\textwidth]{diff_AD_ref2_vol.png}\label{diff_ad_u_ref2}}
+	\subfloat[Distribution of the energy density error in \%]{\includegraphics[width=0.35\textwidth]{energ_AD_ref2_vol.png}\label{energ_ad_u_ref2}}\\
+\subfloat[Distribution of the displacement error in \% per component]{\includegraphics[width=0.7\textwidth]{diff_AD_ref2_vol_component.png}\label{diff_ad_u_ref2_compo}}
+	\caption{Error in displacement and energy density (distribution in \%) of the MFEM AD approach (see section \ref{AD}) compare to MFEM. The simulation correspond to the test case of section \ref{expl1} in traction and refined 2 times.\label{error_ad_u_ref2}}
+\end{figure}
+For a mesh refined 2 times, the \f{} approach of the \ref{symbsym} section compared to MFEM gives the following errors:
+\begin{itemize}
+	\item $L2_x(\vm{u}_{\text{\f{} sympy symb}})=4.103503e^{-04}$m
+	\item $L2_y(\vm{u}_{\text{\f{} sympy symb}})= 1.675378e^{-04}$m
+	\item $EE(\vm{u}_{\text{\f{} sympy symb}})= 4.239257e^{6}J/m^3$
+\end{itemize}
+The distribution of these important errors is shown in the figure \ref{diff_u_ref2}. It shows some localised peaks that represent more than 6\% of their respective error.
+\begin{figure}	
+	\centering
+	\subfloat[Distribution of the displacement magnitude error in  \%]{\includegraphics[width=0.5\textwidth]{diff_ref2_vol.png}\label{diff_u_ref2_full}}
+	\subfloat[Distribution of the energy density error in \%]{\includegraphics[width=0.5\textwidth]{erro_energ_ref2_vol.png}\label{diff_u_ref2_filt}}
+	\caption{Error in displacement and energy density (distribution in \%) of the \f{} Sympy symmetric approach (see section \ref{Fenicx_form}) compare to MFEM. The simulation correspond to the test case of section \ref{expl1} in traction and refined 2 times.\label{diff_u_ref2}}
+\end{figure}
+Their positions and intensities are related to the difference in mesh refinement between MFEM and \f{}, amplified by the sensitivity of the law to damage.
+This can be seen in figure \ref{diff}, where the difference in mesh orientation, exactly where the damage is not zero, leads to these displacement fluctuations. 
+In the same figure, the MFEM mesh quality (aspect ratio) shows that the problem is not related to this aspect. 
+This is mainly due to the sensitivity of the asymmetric model to damage, which is not the same for rotated elements. 
+\begin{figure}	
+	\includegraphics[width=0.9\textwidth]{diff_ref2_vol_zoom_mesh_difference.png}
+	\caption{Refinement impact for the test case of section \ref{expl1} in traction. On left error in displacement  (\% error on \f{} refined mesh) of \f{} Sympy symmetric approach (see section \ref{Fenicx_form}) compare to MFEM. On center mesh quality (aspect ratio) of MFEM refined mesh. On right damage field on MFEM mesh in this location.\label{diff}}
+\end{figure}
+The full comparison of displacements between \f{} and MFEM is therefore only meaningful for the unrefined mesh, which is the same for both codes.
+The figure \ref{error_ref0} shows, for the unrefined mesh, the distribution between the four \f{} approaches (see section \ref{Fenicx_form}) and MFEM. 
+All four approaches lead to the same errors:
+\begin{itemize}
+	\item $L2_x(\vm{u}_{\text{\f{}}})=7.514989e^{-08}$m
+	\item $L2_y(\vm{u}_{\text{\f{}}})= 1.738645e^{-07}$m
+	\item $EE(\vm{u}_{\text{\f{}}})= 1.755394e^{-02}J/m^3$
+\end{itemize}
+and the same distribution (easily visible in the figure \ref{error_ref0}).
+\begin{figure}	
+	\subfloat[Distribution of the displacement magnitude error in  \%]{\includegraphics[width=0.5\textwidth]{diff_ref0_vol.png}\label{diff_ref0_vol}}
+	\subfloat[Distribution of the energy density error in \%]{\includegraphics[width=0.5\textwidth]{error_energ_ref0_vol.png}\label{energ_ref0_vol}}
+	\caption{Distribution of error in displacement (\protect\subref*{diff_ref0_vol}) and energy density (\protect\subref*{energ_ref0_vol}) of the 4 \f{} approaches (see section \ref{Fenicx_form}) compare to MFEM. The simulation correspond to the test case of section \ref{expl1} without refinement in traction with  volume loading.\label{error_ref0}}
+\end{figure}
+
+The displacement errors are of the order of the resolution thresholds (see section \ref{solving}). It can therefore be assumed that both libraries  give the same solution at the specified resolution accuracy. 
+The distribution of the error, either in displacement or energy density, clearly shows that it is concentrated in a few damaged areas.  
+This may be due to small differences in damage values calculated using the same algorithm (section \ref{mat_dam}) but not the same mesh database.
+
+
+
+\section{Conclusions}\label{conclusions}
+
+Choosing between \f{} and MFEM largely depends on your specific needs and expertise. 
+
+\bigskip
+\f{} is excellent for users looking for ease of use.
+The user-friendly python interface uses UFL (Unified Form Language) to define variational problems, which automatically generates efficient low-level code.
+The extensive use of python for high-level problem definition is well suited for rapid prototyping (e.g. engineering applications requiring rapid implementation and testing of PDE models) and educational purposes.
+Yet it offers high performance (scalability), as this study shows.
+Thanks to a strong community support, it is relatively easy to learn the python API. However, as this library is still in development (the API is still undergoing major changes), it is important to take this into account in any project based on it.  
+Using the C++ API is not recommended at the beginning of a project, which should logically start with prototyping in Python (unless you are more comfortable with C++ vs. Python).
+However, switching to C++ may be important when moving on to larger problems where computational speed is no longer entirely dependent on the library (e.g., damage smoothing in this study).
+Finally, at the time of writing, \f{} may not be as efficient for extremely large simulations on heterogeneous computers (CPU/GPU) and has limited advanced customization compared to MFEM.
+
+\bigskip
+
+MFEM is ideal for users who require high performance, scalability and extensive customization (for advanced users) for complex simulations.
+It integrates to a larger set of external library compared to \f{}, which provides many alternative solution to obtain high performance on distributed CPU and/or GPU.
+The use of the MFEM library involves a steeper learning curve, especially for users who are not familiar with the C++ language, and its implementation and use require more effort for the simplest problems. 
+This last statement, which may change in the future, is made without investigating the python API proposed by the library but not used so much in the provided nice set of demos/examples.
+Finding the right implementation requires a deep understanding of the library and very good FEM skills. In this respect, \f{} is easier for FEM beginners, and in particular ffcx will choose for you the order of integration, what to put in the integration loop and what is constant, .... 
+The use of Automatic Differentiation (AD) for the formulation description makes MFEM relatively competitive to \f{} UFL. 
+AD offers the same simplicity from an implementation point of view (but not from a language point of view) to describe e.g. a potential that can be differentiated and used in a problem formulation.
+In this study, no major drop in performance was observed with AD compared to the standard handmade implementation.
+It's a shame, though, that AD is only available via a miniapps and is not a basic feature.  
+Compared to \f{}, MFEM offers extended support for complex geometries and higher-order elements with out-of-the-box adaptive mesh refinement (AMR) and NURBS mesh.
+
+
+\bigskip
+Both libraries are powerful tools in the realm of FEM and PDE solving, and your choice should be guided by your project's requirements and your familiarity with programming languages.
+
+With regard to this study, many aspects still need to be investigated / compared by introducing new specific test cases.
+
+\bibliographystyle{abbrv}
+\bibliography{bib}
+\clearpage
+\section*{Copyright}
+This document is licensed under Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International
+
+\bigskip
+\includegraphics{doc.data/img/cc-by-nc-nd.png}
+
+\noindent with the following copyright:
+
+Copyright \textcopyright ~ 2024 - Ecole Centrale de Nantes
+\appendix
+\section{Example section \ref{expl1}}
+\clearpage
+\subsection{Valgrind}
+With unrefined mesh for both library as Valgrind slow down simulation, the callgrind tool provides instructions count shown in figure \ref{callgrindF} and \ref{callgrindM}. These figures focus on elementary vector and matrix creation.
+\begin{figure}
+	\subfloat[handmade (V(289)+M(863)=1152 lines)]{\includegraphics[width=0.5\textwidth]{doc.data/img/fenicsx_manual.png}}
+	\subfloat[UFL(V(293)+M(915)=1208 lines)]{\includegraphics[width=0.5\textwidth]{doc.data/img/fenicsx_ufl.png}}\\
+	\subfloat[sympy (V(262)+M(713)=975 lines) ]{\includegraphics[width=0.5\textwidth]{doc.data/img/fenicsx_symb.png}}\subfloat[sympy sym.(V(261)+M(969)=708 lines) ]{\includegraphics[width=0.5\textwidth]{doc.data/img/fenicsx_symb_sym.png}}
+	\caption{Valgrind instructions count for \f{} strategies. In each case, the kernel with the higher number of instruction corresponds to matrix generation and the lower to vector generation. The number of C source lines for each kernel (V:vector generation, M:matrix generation) is given in brackets in the captions of the sub-figures. The mesh is not refined.\label{callgrindF}}
+\end{figure}
+\begin{figure}
+	\centering
+	\subfloat[standard (Vector)]{\includegraphics[width=0.37\textwidth]{doc.data/img/mfem_vect_inst.png}}~~
+	\subfloat[standard (Matrix)]{\includegraphics[width=0.37\textwidth]{doc.data/img/mfem_matrix_inst.png}}\\
+	\subfloat[AD (Vector) ]{\includegraphics[width=0.38\textwidth]{doc.data/img/mfem_vect_inst_AD.png}}~~
+	\subfloat[AD (Matrix) ]{\includegraphics[width=0.36\textwidth]{doc.data/img/mfem_matrix_inst_AD.png}}
+	\caption{Valgrind instructions count for MFEM standard and AD. Elementary vector and matrix calculations. Mesh is not refined.\label{callgrindM}}
+\end{figure}
+\clearpage
+\subsection{Elapsed time}
+With a double refined mesh, elapsed time collected by specific implementation of the C++ source code for both library are presented in figure \ref{elapsed1}, \ref{elapsed2}, \ref{time_ass_f}, \ref{elapsed4} and \ref{elapsed5}. 
+For all of them the left column present
+\begin{figure}
+	\subfloat[Simulation (in s)]{	
+		\input{doc.data/curve/curves_time_all.tex}
+		\label{time_simu}
+	}
+	\subfloat[Simulation (Ratio vs MFEM)]{	
+		\input{doc.data/curve/curves_time_all_r.tex}
+		\label{time_simu_r}
+	}\\
+	\subfloat[Mesh (in s)]{
+		\input{doc.data/curve/curves_time_mesh.tex}
+		\label{time_mesh}
+	}
+	\subfloat[Mesh  (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_mesh_r.tex}\label{time_mesh_r}}\\
+	\subfloat[Damage generation (in s)]{
+		\input{doc.data/curve/curves_time_dam.tex}
+		\label{time_dam}}
+	\subfloat[Damage generation (Ratio vs MFEM)]{
+		\input{doc.data/curve/curves_time_dam_r.tex}
+		\label{time_dam_r}}
+	\caption{Elapsed time function of the number of processes: Simulation, mesh and damage creation (in log-log scale except for y axes of \protect\subref*{time_simu_r}  )\label{elapsed1}}
+\end{figure}
+\begin{figure}
+	\subfloat[Elementary vector creation (in s)]{
+		\input{doc.data/curve/curves_time_elem_vect.tex}
+	}
+	\subfloat[Elementary vector creation (Ratio vs MFEM)\label{elapsd2rv}]{\input{doc.data/curve/curves_time_elem_vect_r.tex}}\\
+	\subfloat[Elementary matrix creation(in s)]{
+		\input{doc.data/curve/curves_time_elem_mat.tex}
+	}
+	\subfloat[Elementary matrix creation(Ratio vs MFEM)\label{elapsd2rm}]{\input{doc.data/curve/curves_time_elem_mat_r.tex}}
+	\caption{Elapsed time function of the number of processes: Elementary vector and matrix creation (in log-log scale)\label{elapsed2}}
+\end{figure}
+\begin{figure}
+	\input{doc.data/curve/curves_time_ass.tex}
+	\caption{Elementary creation and assembly with \f{} (handmade): Elapsed times in s ( log-log scale)\label{time_ass_f}}
+\end{figure}
+\begin{figure}
+	\subfloat[Strain/stress creation (in s)]{
+		\input{doc.data/curve/curves_time_stress_strain.tex}
+	}
+	\subfloat[Strain/stress creation (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_stress_strain_r.tex}}\\
+	\subfloat[One non-linear loop iteration (in s)]{
+		\input{doc.data/curve/curves_time_nl.tex}
+	\label{time_nl}}
+	\subfloat[One non-linear loop iteration(Ratio vs MFEM)]{\input{doc.data/curve/curves_time_nl_r.tex}\label{time_nl_r}}\\
+	\subfloat[Outputs (in s)]{
+		\input{doc.data/curve/curves_time_output.tex}\label{time_output}
+	}
+	\subfloat[Outputs (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_output_r.tex}\label{time_output_r}}
+	\caption{Elapsed time function of the number of processes: Strain/stress creation, non-linear loop and outputs (in log-log scale)\label{elapsed4}}
+\end{figure}
+\begin{figure}
+	\subfloat[Small (in s)]{
+		\input{doc.data/curve/curves_time_misc.tex}
+	}
+	\subfloat[Small (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_misc_r.tex}}\\
+	\subfloat[Object creation (in s)]{
+		\input{doc.data/curve/curves_time_obj.tex}
+	}
+	\subfloat[Object creation (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_obj_r.tex}}\\
+	\subfloat[Boundary condition (in s)]{
+		\input{doc.data/curve/curves_time_BC.tex}
+	}
+	\subfloat[Boundary condition (Ratio vs MFEM)]{\input{doc.data/curve/curves_time_BC_r.tex}}\\
+	\caption{Elapsed time function of the number of processes: miscellaneous initiation, major object creation and Boundary conditions (in log-log scale except for y axes of \protect\subref*{time_nl_r} )\label{elapsed5}}
+\end{figure}
+\clearpage
+\end{document}
+This is never printed
+
+
