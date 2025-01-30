@@ -25,7 +25,6 @@ from dolfinx import nls
 from dolfinx import cpp
 from dolfinx.fem import petsc
 from dolfinx.nls import petsc
-import adios4dolfinx
 from petsc4py import PETSc
 
 MAX_DAM=1.

@@ -958,6 +958,7 @@ int main(int argc, char *argv[])
    // Initialize
    Mpi::Init(argc, argv);
    double measure[NB_MEASURE];
+   std::fill(measure,measure+NB_MEASURE,0.);
    double start_all = MPI_Wtime();
    double start = MPI_Wtime();
    int nb_proc = Mpi::WorldSize();

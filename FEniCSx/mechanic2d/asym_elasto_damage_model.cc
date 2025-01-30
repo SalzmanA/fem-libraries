@@ -115,6 +115,7 @@ int main(int argc, char *argv[])
    const int mpi_rank = dolfinx::MPI::rank(MPI_COMM_WORLD);
    const bool do_print = (!mpi_rank);
    double measure[NB_MEASURE];
+   std::fill(measure,measure+NB_MEASURE,0.);
    double start_all = MPI_Wtime();
 
    // change scope so that all dolfinx object (or related) get destroy before MPI finalization
